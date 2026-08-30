@@ -1,6 +1,6 @@
 type NavButtonsProps = {
-  activeTab: "search" | "onto_docs";
-  onChange: (tab: "search" | "onto_docs") => void;
+  activeTab: "search" | "docs" | "ontologies" ;
+  onChange: (tab: "search" | "docs" | "ontologies") => void;
 };
 
 export function NavButtons({ activeTab, onChange }: NavButtonsProps) {
@@ -15,10 +15,17 @@ export function NavButtons({ activeTab, onChange }: NavButtonsProps) {
       </button>
       <button
         type="button"
-        className={activeTab === "onto_docs" ? "nav-button active" : "nav-button"}
-        onClick={() => onChange("onto_docs")}
+        className={activeTab === "docs" ? "nav-button active" : "nav-button"}
+        onClick={() => onChange("docs")}
       >
         Documentação
+      </button>
+      <button
+        type="button"
+        className={activeTab === "ontologies" ? "nav-button active" : "nav-button"}
+        onClick={() => onChange("ontologies")}
+      >
+        Ontologias
       </button>
     </div>
   );

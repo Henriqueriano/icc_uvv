@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { NavButtons } from "../components/NavButtons";
+import { SearchTabs } from "../components/SearchTabs";
 
 export function MainView() {
   const [activeTab, setActiveTab] = useState<"search" | "onto_docs">("search");
+  const [searchView, setSearchView] = useState<"perguntas" | "livre">("perguntas");
 
   return (
     <div className="page-shell">
@@ -13,23 +15,29 @@ export function MainView() {
         </div>
       </nav>
 
-      <main className="main-layout">
-        <aside className="sidebar-panel"></aside>
+      {activeTab === "search" ? (
+        <main className="main-layout">
+          <aside className="sidebar-panel">
+            <SearchTabs activeView={searchView} onChange={setSearchView} />
+          </aside>
 
-        <section className="content-panel">
-          {activeTab === "search" ? (
+          <section className="content-panel">
             <div className="content-box">
-              <h2>Buscas</h2>
-              <p>Conteúdo principal do dashboard.</p>
+              <h2>{searchView === "perguntas" ? "Perguntas" : "Livre"}</h2>
+              <p>Conteúdo principal da busca selecionada.</p>
             </div>
-          ) : (
+          </section>
+        </main>
+      ) : (
+        <main className="documentation-layout">
+          <section className="documentation-panel">
             <div className="content-box">
               <h2>Documentação</h2>
               <p>Conteúdo principal dos relatórios.</p>
             </div>
-          )}
-        </section>
-      </main>
+          </section>
+        </main>
+      )}
     </div>
   );
 }
