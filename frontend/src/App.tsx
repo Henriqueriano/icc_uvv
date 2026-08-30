@@ -36,15 +36,15 @@ export function App() {
             : "min-h-screen bg-[#E9DFB0] text-[#2A1F16] transition-colors duration-200"
         }
       >
-        <div className="flex justify-end gap-3 p-4">
+        <div className="flex items-center justify-between gap-3 p-4">
           <select
             aria-label="Select system language"
             value={language}
             onChange={(event) => setLanguage(event.target.value as Language)}
             className={
               darkMode
-                ? "rounded-full border border-[#4C433D] bg-[#2A2724] px-3 py-2 text-sm text-[#F5F1E6] outline-none"
-                : "rounded-full border border-[#D7C99A] bg-[#FDFBE8] px-3 py-2 text-sm text-[#2A1F16] outline-none"
+                ? "rounded-full font-bold border border-[#4C433D] bg-[#2A2724] px-2 py-2 text-sm text-[#F5F1E6] outline-none"
+                : "rounded-full font-bold border border-[#D7C99A] bg-[#FDFBE8] px-2 py-2 text-sm text-[#2A1F16] outline-none"
             }
           >
             <option value="pt-BR">PT-BR</option>

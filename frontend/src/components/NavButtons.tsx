@@ -26,19 +26,21 @@ export function NavButtons({ activeTab, onChange, darkMode, language }: NavButto
       >
         {translation.search}
       </button>
-      <button
-        type="button"
-        className={activeTab === "docs" ? activeButton : baseButton}
-        onClick={() => onChange("docs")}
-      >
-        {translation.documentation}
-      </button>
+
       <button
         type="button"
         className={activeTab === "ontologies" ? activeButton : baseButton}
         onClick={() => onChange("ontologies")}
       >
         {translation.ontologies}
+      </button>
+
+      <button
+        type="button"
+        className={activeTab === "docs" ? activeButton : baseButton}
+        onClick={() => onChange("docs")}
+      >
+        {translation.documentation}
       </button>
     </div>
   );
