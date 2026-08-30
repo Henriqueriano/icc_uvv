@@ -1,4 +1,5 @@
 import { uiText, type Language } from "../i18n";
+import { Settings } from 'lucide-react';
 
 type LoginViewProps = {
   darkMode: boolean;
@@ -43,7 +44,9 @@ export function LoginView({ darkMode, language }: LoginViewProps) {
     <div className={shellClass}>
       <div className={cardClass}>
         <aside className={sideClass}>
-          <div className={badgeClass}>S</div>
+          <div className={badgeClass}>
+            <Settings size={44}/>
+          </div>
           <p className={labelClass}>{translation.internalSystem}</p>
         </aside>
 
