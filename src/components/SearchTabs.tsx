@@ -1,24 +1,33 @@
 type SearchTabsProps = {
-  activeView: "perguntas" | "livre";
-  onChange: (view: "perguntas" | "livre") => void;
+  activeView: "free" | "sparql";
+  onChange: (view: "free" | "sparql") => void;
+  darkMode: boolean;
 };
 
-export function SearchTabs({ activeView, onChange }: SearchTabsProps) {
+export function SearchTabs({ activeView, onChange, darkMode }: SearchTabsProps) {
+  const baseButton = darkMode
+    ? "w-full rounded-xl border border-[#4C433D] bg-[#2A2724] px-4 py-3 text-left text-[#F5F1E6] transition hover:bg-[#342F2B]"
+    : "w-full rounded-xl border border-[#E2D39D] bg-[#FDFBE8] px-4 py-3 text-left text-[#3C2E1F] transition hover:bg-[#F5EFC8]";
+
+  const activeButton = darkMode
+    ? "w-full rounded-xl bg-[#4A3B32] px-4 py-3 text-left font-bold text-[#F5F1E6] shadow-sm"
+    : "w-full rounded-xl bg-[#E7D89B] px-4 py-3 text-left font-bold text-[#2A1F16] shadow-sm";
+
   return (
-    <div className="search-tabs">
+    <div className="flex w-full flex-col gap-3">
       <button
         type="button"
-        className={activeView === "perguntas" ? "search-tab active" : "search-tab"}
-        onClick={() => onChange("perguntas")}
+        className={activeView === "free" ? activeButton : baseButton}
+        onClick={() => onChange("free")}
       >
-        Perguntas
+        Free search
       </button>
       <button
         type="button"
-        className={activeView === "livre" ? "search-tab active" : "search-tab"}
-        onClick={() => onChange("livre")}
+        className={activeView === "sparql" ? activeButton : baseButton}
+        onClick={() => onChange("sparql")}
       >
-        Livre
+        SPARQL search
       </button>
     </div>
   );
