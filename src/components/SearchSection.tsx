@@ -1,12 +1,15 @@
+import { uiText, type Language } from "../i18n";
 import { SearchTabs } from "./SearchTabs";
 
 type SearchSectionProps = {
   searchView: "free" | "sparql";
   onSearchViewChange: (view: "free" | "sparql") => void;
   darkMode: boolean;
+  language: Language;
 };
 
-export function SearchSection({ searchView, onSearchViewChange, darkMode }: SearchSectionProps) {
+export function SearchSection({ searchView, onSearchViewChange, darkMode, language }: SearchSectionProps) {
+  const translation = uiText[language];
   const panelClass = darkMode
     ? "rounded-[18px] border border-[#453F39] bg-[#2A2724] p-5"
     : "rounded-[18px] border border-[#E7DDB3] bg-[#F4EBC9] p-5";
@@ -33,7 +36,7 @@ export function SearchSection({ searchView, onSearchViewChange, darkMode }: Sear
     <>
       <main className="grid gap-5 md:grid-cols-[minmax(220px,30%)_minmax(0,70%)]">
         <aside className={panelClass}>
-          <SearchTabs activeView={searchView} onChange={onSearchViewChange} darkMode={darkMode} />
+          <SearchTabs activeView={searchView} onChange={onSearchViewChange} darkMode={darkMode} language={language} />
         </aside>
 
         <section className={contentPanelClass}>
@@ -41,14 +44,14 @@ export function SearchSection({ searchView, onSearchViewChange, darkMode }: Sear
             <div className={innerPanelClass}>
               <div className="w-full" />
               <div className="flex w-full max-w-[900px] flex-1 items-center justify-center">
-                <textarea id="free-search" placeholder="Type your search" className={inputClass} />
+                <textarea id="free-search" placeholder={translation.freeSearchInput} className={inputClass} />
               </div>
             </div>
           ) : (
             <div className={innerPanelClass}>
               <div className="w-full" />
               <div className="flex w-full max-w-[900px] flex-1 items-center justify-center">
-                <textarea id="sparql-search" placeholder="Type your SPARQL query" className={inputClass} />
+                <textarea id="sparql-search" placeholder={translation.sparqlInput} className={inputClass} />
               </div>
             </div>
           )}
@@ -56,8 +59,8 @@ export function SearchSection({ searchView, onSearchViewChange, darkMode }: Sear
       </main>
 
       <div className={lowerSectionClass}>
-        <h3 className={darkMode ? "mb-2 text-xl font-semibold text-[#F5F1E6]" : "mb-2 text-xl font-semibold text-[#2A1F16]"}>Lower section</h3>
-        <p className={secondaryTextClass}>This area follows the full width of the main page and fills the remaining space.</p>
+        <h3 className={darkMode ? "mb-2 text-xl font-semibold text-[#F5F1E6]" : "mb-2 text-xl font-semibold text-[#2A1F16]"}>{translation.lowerSection}</h3>
+        <p className={secondaryTextClass}>{translation.lowerSectionText}</p>
       </div>
     </>
   );

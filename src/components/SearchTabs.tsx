@@ -1,10 +1,14 @@
+import { uiText, type Language } from "../i18n";
+
 type SearchTabsProps = {
   activeView: "free" | "sparql";
   onChange: (view: "free" | "sparql") => void;
   darkMode: boolean;
+  language: Language;
 };
 
-export function SearchTabs({ activeView, onChange, darkMode }: SearchTabsProps) {
+export function SearchTabs({ activeView, onChange, darkMode, language }: SearchTabsProps) {
+  const translation = uiText[language];
   const baseButton = darkMode
     ? "w-full rounded-xl border border-[#4C433D] bg-[#2A2724] px-4 py-3 text-left text-[#F5F1E6] transition hover:bg-[#342F2B]"
     : "w-full rounded-xl border border-[#E2D39D] bg-[#FDFBE8] px-4 py-3 text-left text-[#3C2E1F] transition hover:bg-[#F5EFC8]";
@@ -20,14 +24,14 @@ export function SearchTabs({ activeView, onChange, darkMode }: SearchTabsProps) 
         className={activeView === "free" ? activeButton : baseButton}
         onClick={() => onChange("free")}
       >
-        Free search
+        {translation.freeSearch}
       </button>
       <button
         type="button"
         className={activeView === "sparql" ? activeButton : baseButton}
         onClick={() => onChange("sparql")}
       >
-        SPARQL search
+        {translation.sparql}
       </button>
     </div>
   );

@@ -1,10 +1,14 @@
+import { uiText, type Language } from "../i18n";
+
 type NavButtonsProps = {
   activeTab: "search" | "docs" | "ontologies";
   onChange: (tab: "search" | "docs" | "ontologies") => void;
   darkMode: boolean;
+  language: Language;
 };
 
-export function NavButtons({ activeTab, onChange, darkMode }: NavButtonsProps) {
+export function NavButtons({ activeTab, onChange, darkMode, language }: NavButtonsProps) {
+  const translation = uiText[language];
   const baseButton = darkMode
     ? "rounded-xl border border-[#4C433D] bg-[#2A2724] px-4 py-3 text-[#F5F1E6] transition hover:bg-[#342F2B]"
     : "rounded-xl border border-[#E2D39D] bg-[#FDFBE8] px-4 py-3 text-[#3C2E1F] transition hover:bg-[#F5EFC8]";
@@ -20,21 +24,21 @@ export function NavButtons({ activeTab, onChange, darkMode }: NavButtonsProps) {
         className={activeTab === "search" ? activeButton : baseButton}
         onClick={() => onChange("search")}
       >
-        Search
+        {translation.search}
       </button>
       <button
         type="button"
         className={activeTab === "docs" ? activeButton : baseButton}
         onClick={() => onChange("docs")}
       >
-        Documentation
+        {translation.documentation}
       </button>
       <button
         type="button"
         className={activeTab === "ontologies" ? activeButton : baseButton}
         onClick={() => onChange("ontologies")}
       >
-        Ontologies
+        {translation.ontologies}
       </button>
     </div>
   );

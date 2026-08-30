@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { uiText, type Language } from "../i18n";
 import { DocumentationSection } from "../components/DocumentationSection";
 import { NavButtons } from "../components/NavButtons";
 import { OntologiesSection } from "../components/OntologiesSection";
@@ -6,11 +7,13 @@ import { SearchSection } from "../components/SearchSection";
 
 type MainViewProps = {
   darkMode: boolean;
+  language: Language;
 };
 
-export function MainView({ darkMode }: MainViewProps) {
+export function MainView({ darkMode, language }: MainViewProps) {
   const [activeTab, setActiveTab] = useState<"search" | "docs" | "ontologies">("search");
   const [searchView, setSearchView] = useState<"free" | "sparql">("free");
+  const translation = uiText[language];
 
   const shellClass = darkMode
     ? "mx-auto w-full max-w-[1200px] rounded-[22px] border border-[#453F39] bg-[#1F1D1A] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.28)]"
@@ -27,14 +30,13 @@ export function MainView({ darkMode }: MainViewProps) {
       <div className={shellClass}>
         <nav className={navClass}>
           <div className="flex w-full flex-col gap-2 md:max-w-[420px]">
-            <label className={labelClass}>Menu</label>
-            <NavButtons activeTab={activeTab} onChange={setActiveTab} darkMode={darkMode} />
+            <NavButtons activeTab={activeTab} onChange={setActiveTab} darkMode={darkMode} language={language} />
           </div>
         </nav>
 
-        {activeTab === "search" && <SearchSection searchView={searchView} onSearchViewChange={setSearchView} darkMode={darkMode} />}
-        {activeTab === "docs" && <DocumentationSection darkMode={darkMode} />}
-        {activeTab === "ontologies" && <OntologiesSection darkMode={darkMode} />}
+        {activeTab === "search" && <SearchSection searchView={searchView} onSearchViewChange={setSearchView} darkMode={darkMode} language={language} />}
+        {activeTab === "docs" && <DocumentationSection darkMode={darkMode} language={language} />}
+        {activeTab === "ontologies" && <OntologiesSection darkMode={darkMode} language={language} />}
       </div>
     </div>
   );
