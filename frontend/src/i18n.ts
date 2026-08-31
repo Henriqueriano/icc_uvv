@@ -36,6 +36,10 @@ export const uiText = {
       "Consulte a estrutura formal da ontologia para compreender as relações entre os dados.",
       "Explore os resultados em contextos de documentação e semântica aplicada.",
     ],
+    statsInsert: "Dados",
+    statsMetrics: "Estatísticas",
+    statsImportTitle: "Importar RDF",
+    statsImportDescription: "Carregue novos arquivos RDF para enriquecer a base semântica do sistema.",
   },
   "en-US": {
     menu: "Menu",
@@ -72,6 +76,10 @@ export const uiText = {
       "Consult the formal ontology structure to understand the relationships between the data.",
       "Explore the results in documentation and applied semantic contexts.",
     ],
+    statsInsert: "Data",
+    statsMetrics: "Statistics",
+    statsImportTitle: "Import RDF",
+    statsImportDescription: "Upload new RDF files to enrich the semantic database of the system.",
   },
   "es-ES": {
     menu: "Menú",
@@ -106,8 +114,12 @@ export const uiText = {
       "Selecciona el tipo de búsqueda deseado en el panel principal.",
       "Usa términos relevantes para localizar entidades, propiedades o clases RDF.",
       "Consulta la estructura formal de la ontología para comprender las relaciones entre los datos.",
-      "Explora los resultados en contextos de documentación y semántica aplicada.",
+      "Explora los resultados en contextos de documentação y semántica aplicada.",
     ],
+    statsInsert: "Datos",
+    statsMetrics: "Estadísticas",
+    statsImportTitle: "Importar RDF",
+    statsImportDescription: "Carga nuevos archivos RDF para enriquecer la base semántica del sistema.",
   },
 } as const;
 

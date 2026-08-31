@@ -1,11 +1,20 @@
 import { useEffect, useState } from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { ToggleLeft, ToggleRight } from "lucide-react";
 import "./index.css";
 import type { Language } from "./i18n";
 import { AdminView } from "./views/AdminView";
+import { LoginView } from "./views/LoginView";
 import { MainView } from "./views/MainView";
 import { NotFoundView } from "./views/NotFoundView";
+
+function ProtectedAdminRoute({ isAdmin, children }: { isAdmin: boolean; children: JSX.Element }) {
+  if (!isAdmin) {
+    return <Navigate to="/admin" replace />;
+  }
+
+  return children;
+}
 
 export function App() {
   const [darkMode, setDarkMode] = useState<boolean>(() => {
@@ -19,6 +28,11 @@ export function App() {
     return current === "en-US" || current === "es-ES" ? current : "pt-BR";
   });
 
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("isAdmin") === "true";
+  });
+
   useEffect(() => {
     localStorage.setItem("theme", darkMode ? "dark" : "light");
   }, [darkMode]);
@@ -26,6 +40,10 @@ export function App() {
   useEffect(() => {
     localStorage.setItem("language", language);
   }, [language]);
+
+  useEffect(() => {
+    localStorage.setItem("isAdmin", isAdmin ? "true" : "false");
+  }, [isAdmin]);
 
   return (
     <BrowserRouter>
@@ -67,7 +85,18 @@ export function App() {
 
         <Routes>
           <Route path="/" element={<MainView darkMode={darkMode} language={language} />} />
-          <Route path="/admin" element={<AdminView darkMode={darkMode} language={language} />} />
+          <Route
+            path="/admin"
+            element={<LoginView darkMode={darkMode} language={language} isAdmin={isAdmin} onLogin={() => setIsAdmin(true)} onLogout={() => setIsAdmin(false)} />}
+          />
+          <Route
+            path="/admin/stats"
+            element={
+              <ProtectedAdminRoute isAdmin={isAdmin}>
+                <AdminView darkMode={darkMode} language={language} />
+              </ProtectedAdminRoute>
+            }
+          />
           <Route path="*" element={<NotFoundView darkMode={darkMode} language={language} />} />
         </Routes>
       </div>

@@ -1,13 +1,19 @@
+import type { FormEvent } from "react";
 import { uiText, type Language } from "../i18n";
 import { Settings } from 'lucide-react';
+import { useNavigate } from "react-router-dom";
 
 type LoginViewProps = {
   darkMode: boolean;
   language: Language;
+  isAdmin: boolean;
+  onLogin: () => void;
+  onLogout: () => void;
 };
 
-export function LoginView({ darkMode, language }: LoginViewProps) {
+export function LoginView({ darkMode, language, isAdmin, onLogin, onLogout }: LoginViewProps) {
   const translation = uiText[language];
+  const navigate = useNavigate();
   const shellClass = darkMode
     ? "mx-auto w-[min(1000px,calc(100%-24px))] p-5"
     : "mx-auto w-[min(1000px,calc(100%-24px))] p-5";
@@ -40,6 +46,12 @@ export function LoginView({ darkMode, language }: LoginViewProps) {
     ? "mt-2 h-12 rounded-xl bg-[#4A3B32] font-bold text-[#F5F1E6]"
     : "mt-2 h-12 rounded-xl bg-[#E7D89B] font-bold text-[#2A1F16]";
 
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    onLogin();
+    navigate("/admin/stats");
+  };
+
   return (
     <div className={shellClass}>
       <div className={cardClass}>
@@ -51,7 +63,7 @@ export function LoginView({ darkMode, language }: LoginViewProps) {
         </aside>
 
         <section className={formPanelClass}>
-          <form className="mt-7 flex flex-col gap-5">
+          <form onSubmit={handleSubmit} className="mt-7 flex flex-col gap-5">
             <label className={fieldLabelClass}>
               <span>{translation.email}</span>
               <input type="email" placeholder="seu@email.com" className={inputClass} />
@@ -74,8 +86,21 @@ export function LoginView({ darkMode, language }: LoginViewProps) {
             </div>
 
             <button type="submit" className={submitClass}>
-              {translation.submit}
+              {translation.login}
             </button>
+
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => {
+                  onLogout();
+                  navigate("/admin");
+                }}
+                className={darkMode ? "text-sm text-[#E8DCC2] underline" : "text-sm text-[#6B543A] underline"}
+              >
+                Sair do painel
+              </button>
+            )}
           </form>
         </section>
       </div>
