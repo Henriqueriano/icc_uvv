@@ -1,4 +1,6 @@
+import { useState, type FormEvent } from "react";
 import { uiText, type Language } from "../i18n";
+import { ArrowRight } from "lucide-react";
 import { SearchTabs } from "./SearchTabs";
 
 type SearchSectionProps = {
@@ -9,6 +11,7 @@ type SearchSectionProps = {
 };
 
 export function SearchSection({ searchView, onSearchViewChange, darkMode, language }: SearchSectionProps) {
+  const [searchResult, setSearchResult] = useState("");
   const translation = uiText[language];
   const panelClass = darkMode
     ? "rounded-[18px] border border-[#453F39] bg-[#2A2724] p-5"
@@ -27,10 +30,20 @@ export function SearchSection({ searchView, onSearchViewChange, darkMode, langua
   const inputClass = darkMode
     ? "h-full min-h-[270px] w-full flex-1 resize-none rounded-xl border border-[#4C433D] bg-[#171614] px-4 py-3 text-left align-top text-[#F5F1E6] placeholder:text-left placeholder:align-top placeholder:text-[#B7A98E] focus:outline-none focus:ring-2 focus:ring-[#D1B866]/70"
     : "h-full min-h-[270px] w-full flex-1 resize-none rounded-xl border border-[#E2D39D] bg-[#FFFDF3] px-4 py-3 text-left align-top text-[#2A1F16] placeholder:text-left placeholder:align-top placeholder:text-[#7A6854] focus:outline-none focus:ring-2 focus:ring-[#D1B866]/70";
+  const submitClass = darkMode
+    ? "inline-flex shrink-0 items-center justify-center rounded-full border border-[#4C433D] bg-[#4A3B32] p-3 text-[#F5F1E6] transition hover:bg-[#5A493E] focus:outline-none focus:ring-2 focus:ring-[#D1B866]/70"
+    : "inline-flex shrink-0 items-center justify-center rounded-full border border-[#D7C99A] bg-[#E7D89B] p-3 text-[#2A1F16] transition hover:bg-[#F0E4AA] focus:outline-none focus:ring-2 focus:ring-[#D1B866]/70";
 
   const lowerSectionClass = darkMode
     ? "mt-5 min-h-[220px] w-full rounded-[18px] border border-[#453F39] bg-[#2A2724] p-6"
     : "mt-5 min-h-[220px] w-full rounded-[18px] border border-[#E7DDB3] bg-[#F4EBC9] p-6";
+
+  const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const query = String(formData.get("query") ?? "").trim();
+    setSearchResult(query);
+  };
 
   return (
     <>
@@ -43,16 +56,27 @@ export function SearchSection({ searchView, onSearchViewChange, darkMode, langua
           {searchView === "free" ? (
             <div className={innerPanelClass}>
               <div className="w-full" />
-              <div className="flex w-full max-w-[900px] flex-1 items-center justify-center">
-                <textarea id="free-search" placeholder={translation.freeSearchInput} className={inputClass} />
-              </div>
+              <form onSubmit={handleSearchSubmit} className="flex w-full max-w-[900px] flex-1 items-center justify-center gap-3">
+                <textarea id="free-search" name="query" placeholder={translation.freeSearchInput} className={inputClass} />
+                <button type="submit" className={submitClass} aria-label={translation.freeSearch}>
+                  <ArrowRight size={22} aria-hidden="true" />
+                </button>
+              </form>
             </div>
           ) : (
             <div className={innerPanelClass}>
               <div className="w-full" />
-              <div className="flex w-full max-w-[900px] flex-1 items-center justify-center">
-                <textarea id="sparql-search" placeholder={translation.sparqlInput} className={inputClass} />
-              </div>
+              <form onSubmit={handleSearchSubmit} className="flex w-full max-w-[900px] flex-1 items-center justify-center gap-3">
+                <textarea
+                  id="sparql-search"
+                  name="query"
+                  placeholder={"SELECT ?subject ?predicate ?object\nWHERE {\n  ?subject ?predicate ?object .\n}"}
+                  className={inputClass}
+                />
+                <button type="submit" className={submitClass} aria-label={translation.sparql}>
+                  <ArrowRight size={22} aria-hidden="true" />
+                </button>
+              </form>
             </div>
           )}
         </section>
@@ -60,7 +84,9 @@ export function SearchSection({ searchView, onSearchViewChange, darkMode, langua
 
       <div className={lowerSectionClass}>
         <h3 className={darkMode ? "mb-2 text-xl font-semibold text-[#F5F1E6]" : "mb-2 text-xl font-semibold text-[#2A1F16]"}>{translation.lowerSection}</h3>
-        <p className={secondaryTextClass}>{translation.lowerSectionText}</p>
+        <p className={secondaryTextClass}>
+          {searchResult ? `Resultados da busca por: ${searchResult}` : translation.lowerSectionText}
+        </p>
       </div>
     </>
   );

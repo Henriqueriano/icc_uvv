@@ -1,0 +1,40 @@
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: icc-uvv-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: appdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d appdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  fuseki:
+    image: stain/jena-fuseki:latest
+    container_name: icc-uvv-fuseki
+    restart: unless-stopped
+    environment:
+      ADMIN_PASSWORD: admin
+      FUSEKI_DATASET_1: icc_uvv
+      FUSEKI_DATASET_1_RW: "true"
+      FUSEKI_DATASET_1_TYPE: tdb
+    ports:
+      - "3030:3030"
+    volumes:
+      - fuseki_data:/fuseki
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  fuseki_data:

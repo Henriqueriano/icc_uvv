@@ -1,3 +1,4 @@
+import { ArrowUpToLine } from "lucide-react";
 import { uiText, type Language } from "../i18n";
 
 type AdminInsertSectionProps = {
@@ -37,10 +38,11 @@ export function AdminInsertSection({ darkMode, language }: AdminInsertSectionPro
             type="button"
             className={
               darkMode
-                ? "rounded-full bg-[#4A3B32] px-4 py-2 text-sm font-medium text-[#F5F1E6]"
-                : "rounded-full bg-[#E7D89B] px-4 py-2 text-sm font-medium text-[#2A1F16]"
+                ? "inline-flex items-center gap-2 rounded-xl border border-dashed border-[#8C6E4C] bg-[#2A2724] px-4 py-2.5 text-sm font-medium text-[#F5F1E6] transition hover:bg-[#342F2B]"
+                : "inline-flex items-center gap-2 rounded-xl border border-dashed border-[#A57A4B] bg-[#FDFBE8] px-4 py-2.5 text-sm font-medium text-[#2A1F16] transition hover:bg-[#F5EFC8]"
             }
           >
+            <ArrowUpToLine size={16} />
             Importar arquivo
           </button>
         </div>

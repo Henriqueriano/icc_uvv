@@ -54,7 +54,7 @@ export function App() {
             : "min-h-screen bg-[#E9DFB0] text-[#2A1F16] transition-colors duration-200"
         }
       >
-        <div className="flex items-center justify-between gap-3 p-4">
+        <div className="flex h-16 items-center justify-between gap-3 px-4">
           <select
             aria-label="Select system language"
             value={language}
@@ -83,22 +83,24 @@ export function App() {
           </button>
         </div>
 
-        <Routes>
-          <Route path="/" element={<MainView darkMode={darkMode} language={language} />} />
-          <Route
-            path="/admin"
-            element={<LoginView darkMode={darkMode} language={language} isAdmin={isAdmin} onLogin={() => setIsAdmin(true)} onLogout={() => setIsAdmin(false)} />}
-          />
-          <Route
-            path="/admin/stats"
-            element={
-              <ProtectedAdminRoute isAdmin={isAdmin}>
-                <AdminView darkMode={darkMode} language={language} />
-              </ProtectedAdminRoute>
-            }
-          />
-          <Route path="*" element={<NotFoundView darkMode={darkMode} language={language} />} />
-        </Routes>
+        <div className="h-[calc(100vh-64px)] overflow-hidden">
+          <Routes>
+            <Route path="/" element={<MainView darkMode={darkMode} language={language} />} />
+            <Route
+              path="/admin"
+              element={<LoginView darkMode={darkMode} language={language} isAdmin={isAdmin} onLogin={() => setIsAdmin(true)} onLogout={() => setIsAdmin(false)} />}
+            />
+            <Route
+              path="/admin/stats"
+              element={
+                <ProtectedAdminRoute isAdmin={isAdmin}>
+                  <AdminView darkMode={darkMode} language={language} />
+                </ProtectedAdminRoute>
+              }
+            />
+            <Route path="*" element={<NotFoundView darkMode={darkMode} language={language} />} />
+          </Routes>
+        </div>
       </div>
     </BrowserRouter>
   );

@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://example.com/sitemap.xml
+
+# Public site
+# This app is a semantic RDF file exploration interface and should be indexed as a public frontend.
