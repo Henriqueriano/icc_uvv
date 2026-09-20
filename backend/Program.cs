@@ -6,6 +6,7 @@ using backend.Options;
 using backend.Services.Graphs;
 using backend.Services.Rdf;
 using backend.Services.RdfValidation;
+using backend.Services.Search;
 using backend.Services.Sparql;
 using Microsoft.Extensions.Options;
 
@@ -41,6 +42,7 @@ builder.Services.AddScoped<IRdfHealthCheck, RdfHealthCheck>();
 builder.Services.AddScoped<IRdfValidationService, RdfValidationService>();
 builder.Services.AddScoped<IGraphService, GraphService>();
 builder.Services.AddScoped<ISparqlService, SparqlService>();
+builder.Services.AddScoped<ISearchService, SearchService>();
 
 builder.Services.AddProblemDetails();
 
