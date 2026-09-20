@@ -18,16 +18,16 @@ public class SearchController : ControllerBase
         _searchService = searchService;
     }
 
-    [Authorize(Policy = "RdfRead")]
     [HttpPost]
+    [AllowAnonymous]
     public async Task<IActionResult> Search([FromBody] SearchRequest request, CancellationToken cancellationToken)
     {
         var result = await _searchService.SearchAsync(request, cancellationToken);
         return Content(result, "application/sparql-results+json");
     }
 
-    [Authorize(Policy = "RdfRead")]
     [HttpGet("suggestions")]
+    [AllowAnonymous]
     public async Task<IActionResult> Suggestions([FromQuery] string text, CancellationToken cancellationToken)
     {
         var result = await _searchService.SuggestionsAsync(text, cancellationToken);

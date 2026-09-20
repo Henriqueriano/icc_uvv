@@ -37,6 +37,10 @@ public class ExceptionHandlingMiddleware
 
             var traceId = Activity.Current?.Id ?? context.TraceIdentifier;
             problemDetails.Extensions["traceId"] = traceId;
+            if (ex.Data["ollamaResponse"] is string generatedQuery)
+            {
+                problemDetails.Extensions["ollamaResponse"] = generatedQuery;
+            }
 
             context.Response.ContentType = "application/problem+json";
             context.Response.StatusCode = problemDetails.Status ?? StatusCodes.Status500InternalServerError;

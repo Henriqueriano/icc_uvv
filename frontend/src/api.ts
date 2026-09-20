@@ -6,6 +6,18 @@ type AuthResponse = {
   expiresIn: number;
 };
 
+export class ApiError extends Error {
+  readonly ollamaResponse?: string;
+  readonly status: number;
+
+  constructor(message: string, status: number, ollamaResponse?: string) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.ollamaResponse = ollamaResponse;
+  }
+}
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem("accessToken");
   const headers = new Headers(options.headers);
@@ -18,8 +30,20 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
   const response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers });
   if (!response.ok) {
-    const detail = await response.text();
-    throw new Error(detail || `Erro ${response.status}`);
+    if (response.status === 401) {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("isAdmin");
+    }
+    const body = await response.text();
+    try {
+      const problem = JSON.parse(body) as { detail?: string; ollamaResponse?: string };
+      throw new ApiError(problem.detail || "Sessão expirada. Faça login novamente.", response.status, problem.ollamaResponse);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      throw new ApiError(body || `Erro ${response.status}`, response.status);
+    }
   }
   return response.status === 204 ? (undefined as T) : response.json();
 }

@@ -2,6 +2,7 @@ using backend.Contracts.Search;
 using backend.Infrastructure.Exceptions;
 using backend.Infrastructure.Ollama;
 using backend.Infrastructure.Qlever;
+using System.Text.Json.Nodes;
 
 namespace backend.Services.Search;
 
@@ -33,13 +34,36 @@ public class SearchService : ISearchService
             throw new ArgumentException("Page and page size values must be valid.", nameof(request));
         }
 
+        var query = string.Empty;
         try
         {
-            var query = await GenerateQueryAsync(request.Text.Trim(), request.PageSize, cancellationToken);
-            return await _qleverClient.ExecuteQueryAsync(query, request.Graph, cancellationToken);
+            string? qleverError = null;
+            for (var attempt = 0; attempt < 3; attempt++)
+            {
+                try
+                {
+                    query = await GenerateQueryAsync(request.Text.Trim(), request.PageSize, qleverError, cancellationToken);
+                    var qleverResponse = await _qleverClient.ExecuteQueryAsync(query, request.Graph, cancellationToken);
+                    return AddGeneratedQuery(qleverResponse, query);
+                }
+                catch (SparqlException ex) when (attempt < 2)
+                {
+                    qleverError = ex.Message;
+                }
+            }
+
+            throw new SparqlException("QLever rejected the generated SPARQL query after multiple repair attempts.");
         }
+
         catch (Exception ex) when (ex is SparqlException or TimeoutException or DependencyUnavailableException)
         {
+            if (ex is not SparqlException || !ex.Data.Contains("ollamaResponse"))
+            {
+                if (!string.IsNullOrWhiteSpace(query))
+                {
+                    ex.Data["ollamaResponse"] = query;
+                }
+            }
             throw;
         }
         catch (Exception ex)
@@ -48,7 +72,19 @@ public class SearchService : ISearchService
         }
     }
 
-    private async Task<string> GenerateQueryAsync(string text, int pageSize, CancellationToken cancellationToken)
+    private static string AddGeneratedQuery(string qleverResponse, string generatedQuery)
+    {
+        var response = JsonNode.Parse(qleverResponse)?.AsObject()
+            ?? throw new SparqlException("QLever returned an invalid JSON response.");
+        response["ollamaResponse"] = generatedQuery;
+        return response.ToJsonString();
+    }
+
+    private async Task<string> GenerateQueryAsync(
+        string text,
+        int pageSize,
+        string? qleverError,
+        CancellationToken cancellationToken)
     {
         var prompt = $"""
             Convert the user's request into one read-only SPARQL 1.1 query for an RDF knowledge graph.
@@ -58,25 +94,45 @@ public class SearchService : ISearchService
             Always include LIMIT {pageSize} unless the query is an aggregate.
             User request: {text}
             """;
+        if (!string.IsNullOrWhiteSpace(qleverError))
+        {
+            prompt += $"""
+
+                QLever rejected the previous query with this error:
+                {qleverError}
+                Repair the query for QLever and return only the corrected SPARQL.
+                """;
+        }
 
         var generated = await _ollamaClient.GenerateAsync(prompt, cancellationToken);
         var query = generated
             .Replace("```sparql", string.Empty, StringComparison.OrdinalIgnoreCase)
             .Replace("```", string.Empty, StringComparison.OrdinalIgnoreCase)
             .Trim();
-        if (string.IsNullOrWhiteSpace(query)
-            || query.Contains("INSERT", StringComparison.OrdinalIgnoreCase)
-            || query.Contains("DELETE", StringComparison.OrdinalIgnoreCase)
-            || query.Contains("UPDATE", StringComparison.OrdinalIgnoreCase)
-            || !(query.StartsWith("SELECT", StringComparison.OrdinalIgnoreCase)
-                || query.StartsWith("ASK", StringComparison.OrdinalIgnoreCase)
-                || query.StartsWith("CONSTRUCT", StringComparison.OrdinalIgnoreCase)
-                || query.StartsWith("DESCRIBE", StringComparison.OrdinalIgnoreCase)))
+        if (!IsReadOnlyQuery(query))
         {
             throw new SparqlException("Ollama returned an invalid or non-read-only SPARQL query.");
         }
 
         return query;
+    }
+
+    private static bool IsReadOnlyQuery(string query)
+    {
+        return !string.IsNullOrWhiteSpace(query)
+            && !query.Contains("INSERT", StringComparison.OrdinalIgnoreCase)
+            && !query.Contains("DELETE", StringComparison.OrdinalIgnoreCase)
+            && !query.Contains("UPDATE", StringComparison.OrdinalIgnoreCase)
+            && !query.Contains("LOAD", StringComparison.OrdinalIgnoreCase)
+            && !query.Contains("CLEAR", StringComparison.OrdinalIgnoreCase)
+            && !query.Contains("DROP", StringComparison.OrdinalIgnoreCase)
+            && !query.Contains("CREATE", StringComparison.OrdinalIgnoreCase)
+            && (query.StartsWith("SELECT", StringComparison.OrdinalIgnoreCase)
+                || query.StartsWith("ASK", StringComparison.OrdinalIgnoreCase)
+                || query.StartsWith("CONSTRUCT", StringComparison.OrdinalIgnoreCase)
+                || query.StartsWith("DESCRIBE", StringComparison.OrdinalIgnoreCase)
+                || query.StartsWith("PREFIX", StringComparison.OrdinalIgnoreCase)
+                || query.StartsWith("BASE", StringComparison.OrdinalIgnoreCase));
     }
 
     public async Task<string> SuggestionsAsync(string text, CancellationToken cancellationToken = default)

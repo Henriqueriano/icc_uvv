@@ -58,6 +58,13 @@ export function RdfGraph({ result, darkMode }: RdfGraphProps) {
     const svg = d3.select(svgElement);
     svg.selectAll("*").remove();
     svg.attr("viewBox", `0 0 ${width} ${height}`);
+    const graphLayer = svg.append("g");
+    svg.call(
+      d3.zoom<SVGSVGElement, unknown>()
+        .scaleExtent([0.35, 3])
+        .translateExtent([[-width, -height], [width * 2, height * 2]])
+        .on("zoom", (event) => graphLayer.attr("transform", event.transform)),
+    );
 
     const simulation = d3.forceSimulation(nodes)
       .force("link", d3.forceLink<GraphNode, GraphLink>(links).id((node) => node.id).distance(120))
@@ -65,12 +72,12 @@ export function RdfGraph({ result, darkMode }: RdfGraphProps) {
       .force("center", d3.forceCenter(width / 2, height / 2))
       .force("collide", d3.forceCollide(28));
 
-    const link = svg.append("g").attr("stroke", darkMode ? "#8C6E4C" : "#A57A4B").selectAll("line").data(links).join("line");
-    const edgeLabel = svg.append("g").selectAll("text").data(links).join("text")
+    const link = graphLayer.append("g").attr("stroke", darkMode ? "#8C6E4C" : "#A57A4B").selectAll("line").data(links).join("line");
+    const edgeLabel = graphLayer.append("g").selectAll("text").data(links).join("text")
       .attr("font-size", 9)
       .attr("fill", darkMode ? "#E8DCC2" : "#524332")
       .text((d) => d.predicate);
-    const node = svg.append("g").selectAll("g").data(nodes).join("g").call(
+    const node = graphLayer.append("g").selectAll("g").data(nodes).join("g").call(
       d3.drag<SVGGElement, GraphNode>()
         .on("start", (event, d) => {
           if (!event.active) simulation.alphaTarget(0.3).restart();
@@ -103,5 +110,5 @@ export function RdfGraph({ result, darkMode }: RdfGraphProps) {
   }, [darkMode, triples]);
 
   if (triples.length === 0) return null;
-  return <div className="mb-4 overflow-x-auto rounded-xl border border-[#A57A4B]/40 p-2"><svg ref={svgRef} className="h-[420px] min-w-[640px] w-full" role="img" aria-label="Grafo RDF resultante da consulta" /></div>;
+  return <div className="mb-4 overflow-hidden rounded-xl border border-[#A57A4B]/40 p-2"><svg ref={svgRef} className="h-[420px] min-h-[420px] w-full cursor-grab touch-none active:cursor-grabbing" role="img" aria-label="Grafo RDF resultante da consulta. Arraste o fundo para navegar e use o scroll para ampliar." /></div>;
 }
