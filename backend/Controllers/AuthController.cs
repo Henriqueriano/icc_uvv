@@ -2,10 +2,10 @@ using backend.Contracts.Auth;
 using backend.Data;
 using backend.Options;
 using backend.Services.Auditing;
+using backend.Services.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -23,16 +23,18 @@ public class AuthController : ControllerBase
     private readonly AuthOptions _authOptions;
     private readonly AppDbContext _dbContext;
     private readonly IAuditService _auditService;
-    private readonly PasswordHasher<User> _passwordHasher = new();
+    private readonly PasswordHashService _passwordHashService;
 
     public AuthController(
         AppDbContext dbContext,
         IOptions<AuthOptions> authOptions,
-        IAuditService auditService)
+        IAuditService auditService,
+        PasswordHashService passwordHashService)
     {
         _dbContext = dbContext;
         _authOptions = authOptions.Value;
         _auditService = auditService;
+        _passwordHashService = passwordHashService;
     }
 
     [AllowAnonymous]
@@ -51,10 +53,16 @@ public class AuthController : ControllerBase
         var user = await _dbContext.Users
             .SingleOrDefaultAsync(candidate => candidate.Username == request.Username && candidate.IsActive, cancellationToken);
         if (user is null
-            || _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password) != PasswordVerificationResult.Success)
+            || !_passwordHashService.Verify(user, request.Password, out var requiresUpgrade))
         {
             await _auditService.AuditAsync("auth-token", "credentials", request.Username, "invalid credentials", false, cancellationToken);
             return Unauthorized();
+        }
+
+        if (requiresUpgrade)
+        {
+            user.PasswordHash = _passwordHashService.Hash(request.Password);
+            await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
         var claims = new[]

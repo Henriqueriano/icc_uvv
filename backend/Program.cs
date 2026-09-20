@@ -8,6 +8,7 @@ using backend.Data;
 using backend.Middleware;
 using backend.Options;
 using backend.Services.Auditing;
+using backend.Services.Authentication;
 using backend.Services.Graphs;
 using backend.Services.Ontologies;
 using backend.Services.Rdf;
@@ -15,6 +16,7 @@ using backend.Services.RdfValidation;
 using backend.Services.Search;
 using backend.Services.Sparql;
 using backend.Services.Statistics;
+using backend.Scripts;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
@@ -63,6 +65,7 @@ SecurityUrlValidator.ValidateConfiguredUrl(rdfOptions.QleverBaseUrl, nameof(RdfO
 builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<RdfOptions>>().Value);
 builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<AuthOptions>>().Value);
 builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<SecurityOptions>>().Value);
+builder.Services.AddSingleton<PasswordHashService>();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString(authOptions.ConnectionStringName)
         ?? throw new InvalidOperationException("DefaultConnection is required.")));
@@ -164,6 +167,12 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddHealthChecks();
 
 var app = builder.Build();
+
+if (args.Contains("--seed-admin", StringComparer.Ordinal))
+{
+    await SeedAdmin.RunAsync(app.Services);
+    return;
+}
 
 await DatabaseInitializer.InitializeAsync(app.Services);
 
