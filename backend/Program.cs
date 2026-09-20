@@ -3,6 +3,7 @@ using backend.Infrastructure.Health;
 using backend.Infrastructure.Qlever;
 using backend.Middleware;
 using backend.Options;
+using backend.Services.Graphs;
 using backend.Services.Rdf;
 using backend.Services.RdfValidation;
 using Microsoft.Extensions.Options;
@@ -37,6 +38,7 @@ builder.Services.AddHttpClient<IQleverClient, QleverClient>((sp, client) =>
 builder.Services.AddScoped<IRdfService, RdfService>();
 builder.Services.AddScoped<IRdfHealthCheck, RdfHealthCheck>();
 builder.Services.AddScoped<IRdfValidationService, RdfValidationService>();
+builder.Services.AddScoped<IGraphService, GraphService>();
 
 builder.Services.AddProblemDetails();
 
