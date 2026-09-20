@@ -1,4 +1,4 @@
-# Etapa 4 — Clientes de infraestrutura para Fuseki e QLever
+# Etapa 4 — Clientes de infraestrutura para QLever e QLever
 
 ## Objetivo
 
@@ -12,13 +12,13 @@ Arquivo atualizado:
 
 - `backend/Program.cs`
 
-Os clientes HTTP de Fuseki e QLever agora recebem tempo de expiração com base na configuração global:
+Os clientes HTTP de QLever e QLever agora recebem tempo de expiração com base na configuração global:
 
 ```csharp
-builder.Services.AddHttpClient<IFusekiClient, FusekiClient>((sp, client) =>
+builder.Services.AddHttpClient<IQLeverClient, QLeverClient>((sp, client) =>
 {
     var options = sp.GetRequiredService<RdfOptions>();
-    client.BaseAddress = new Uri(options.FusekiBaseUrl);
+    client.BaseAddress = new Uri(options.QLeverBaseUrl);
     client.Timeout = TimeSpan.FromSeconds(options.QueryTimeoutSeconds);
 });
 
@@ -38,7 +38,7 @@ Os clientes agora validam a URL base e os parâmetros obrigatórios antes de rea
 
 Exemplos:
 
-- `FusekiClient` rejeita `FusekiBaseUrl` inválida;
+- `QLeverClient` rejeita `QLeverBaseUrl` inválida;
 - `QleverClient` rejeita `QleverBaseUrl` inválida;
 - `QleverClient` exige query não vazia;
 - `QleverClient` exige grafo padrão ou índice configurado.
@@ -47,7 +47,7 @@ Exemplos:
 
 Arquivos atualizados:
 
-- `backend/Infrastructure/Fuseki/FusekiClient.cs`
+- `backend/Infrastructure/QLever/QLeverClient.cs`
 - `backend/Infrastructure/Qlever/QleverClient.cs`
 
 Os clientes agora convertem falhas de rede e indisponibilidade em exceções explícitas:
@@ -66,7 +66,7 @@ No caso do QLever, quando a query recebe resposta com status diferente de sucess
 - inclui o status HTTP e a mensagem do provedor;
 - lança `SparqlException` com detalhes relevantes.
 
-No caso do Fuseki, quando `/$/ping` falha, o cliente lança `DependencyUnavailableException` com o código HTTP e motivo.
+No caso do QLever, quando `/$/ping` falha, o cliente lança `DependencyUnavailableException` com o código HTTP e motivo.
 
 ## Benefícios desta etapa
 

@@ -42,13 +42,13 @@ O arquivo `backend/docker-compose.yml` disponibiliza:
 A conexão da aplicação está definida em `ConnectionStrings:DefaultConnection`
 por variável de ambiente. O arquivo `.env.example` documenta essa variável.
 
-## Integração com Fuseki
+## Integração com QLever
 
-O serviço Fuseki do Compose usa o dataset `icc_uvv`, volume persistente
-`fuseki_data` e porta local `3030`. As credenciais administrativas são
+O serviço QLever do Compose usa o dataset `icc_uvv`, volume persistente
+`qlever_data` e porta local `3030`. As credenciais administrativas são
 configuradas por `ADMIN_USERNAME` e `ADMIN_PASSWORD`.
 
-O cliente `FusekiClient`:
+O cliente `QLeverClient`:
 
 - configura autenticação Basic;
 - verifica disponibilidade com `GET /$/ping`;
@@ -60,10 +60,10 @@ O cliente `FusekiClient`:
 As credenciais usadas pela aplicação ficam em:
 
 ```dotenv
-Rdf__FusekiBaseUrl=http://localhost:3030
-Rdf__FusekiDataset=icc_uvv
-Rdf__FusekiUsername=admin
-Rdf__FusekiPassword=...
+Rdf__QLeverBaseUrl=http://localhost:3030
+Rdf__QLeverDataset=icc_uvv
+Rdf__QLeverUsername=admin
+Rdf__QLeverPassword=...
 ```
 
 Em produção, esses valores devem ser substituídos por secrets ou variáveis de
@@ -83,10 +83,10 @@ Auth__DefaultPassword=...
 Frontend__Url=http://localhost:4040
 ```
 
-O Compose usa o mesmo `.env` para configurar PostgreSQL e Fuseki. Arquivos
+O Compose usa o mesmo `.env` para configurar PostgreSQL e QLever. Arquivos
 `.env` são ignorados pelo Git; somente `.env.example` deve ser versionado.
 
-## Serviços RDF conectados ao Fuseki
+## Serviços RDF conectados ao QLever
 
 As implementações atuais usam consultas reais do dataset para:
 
@@ -138,7 +138,7 @@ desenvolvimento:
 ## Estado atual e próximos pontos técnicos
 
 - `RdfDocumentsController` ainda valida o upload e audita a operação; a
-  gravação efetiva do arquivo no Fuseki não está concluída.
+  gravação efetiva do arquivo no QLever não está concluída.
 - Estatísticas de consultas, buscas, tempo médio e taxa de sucesso dependem de
   armazenamento de métricas; sem histórico, esses campos podem retornar zero.
 - O QLever continua disponível como cliente separado para os fluxos que ainda

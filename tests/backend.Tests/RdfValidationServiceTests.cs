@@ -85,6 +85,13 @@ public class SparqlServiceTests
             Assert.Contains("SELECT", query, StringComparison.OrdinalIgnoreCase);
             return Task.FromResult(response);
         }
+
+        public Task<string> PingAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult("OK");
+
+        public Task UploadAsync(Stream content, string contentType, string? graphName = null, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+
     }
 }
 

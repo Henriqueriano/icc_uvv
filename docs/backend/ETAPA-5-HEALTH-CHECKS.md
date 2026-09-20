@@ -24,7 +24,7 @@ public interface IRdfHealthCheck
 
 A implementação realiza dois testes essenciais:
 
-- ping no Fuseki;
+- ping no QLever;
 - consulta mínima no QLever.
 
 Se qualquer dependência falhar, retorna `false` e indica que a API não está pronta para receber tráfego operacional completo.

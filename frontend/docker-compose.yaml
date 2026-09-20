@@ -1,15 +1,12 @@
 services:
-  fuseki:
-    image: stain/jena-fuseki:latest
-    container_name: apache-fuseki
+  qlever:
+    image: adfreiburg/qlever:latest
+    container_name: icc-uvv-qlever
     ports:
-      - "3030:3030"
-    environment:
-      - ADMIN_PASSWORD=admin
+      - "7011:7011"
     volumes:
-      - fuseki_data:/fuseki
+      - qlever_data:/data
     restart: unless-stopped
 
 volumes:
-  fuseki_data:
-
+  qlever_data:

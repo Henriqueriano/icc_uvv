@@ -1,6 +1,5 @@
 using System.Text;
 using System.Threading.RateLimiting;
-using backend.Infrastructure.Fuseki;
 using backend.Infrastructure.Health;
 using backend.Infrastructure.Qlever;
 using backend.Infrastructure.Security;
@@ -59,7 +58,6 @@ var rdfOptions = builder.Configuration.GetSection(RdfOptions.SectionName).Get<Rd
 var authOptions = builder.Configuration.GetSection(AuthOptions.SectionName).Get<AuthOptions>() ?? new AuthOptions();
 var securityOptions = builder.Configuration.GetSection(SecurityOptions.SectionName).Get<SecurityOptions>() ?? new SecurityOptions();
 
-SecurityUrlValidator.ValidateConfiguredUrl(rdfOptions.FusekiBaseUrl, nameof(RdfOptions.FusekiBaseUrl), securityOptions);
 SecurityUrlValidator.ValidateConfiguredUrl(rdfOptions.QleverBaseUrl, nameof(RdfOptions.QleverBaseUrl), securityOptions);
 
 builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<RdfOptions>>().Value);
@@ -69,13 +67,6 @@ builder.Services.AddSingleton<PasswordHashService>();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString(authOptions.ConnectionStringName)
         ?? throw new InvalidOperationException("DefaultConnection is required.")));
-
-builder.Services.AddHttpClient<IFusekiClient, FusekiClient>((sp, client) =>
-{
-    var options = sp.GetRequiredService<RdfOptions>();
-    client.BaseAddress = new Uri(options.FusekiBaseUrl);
-    client.Timeout = TimeSpan.FromSeconds(options.QueryTimeoutSeconds);
-});
 
 builder.Services.AddHttpClient<IQleverClient, QleverClient>((sp, client) =>
 {

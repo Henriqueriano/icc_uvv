@@ -67,9 +67,9 @@ Valida que:
 ## Observações importantes
 
 - esta suíte representa a base obrigatória de testes para o backend em desenvolvimento;
-- a cobertura ainda pode ser ampliada com testes de integração contra serviços reais de Fuseki e QLever;
+- a cobertura ainda pode ser ampliada com testes de integração contra serviços reais de QLever e QLever;
 - em ambientes de produção, recomenda-se executar testes em containers descartáveis para evitar impacto em infraestrutura compartilhada.
 
 ## Próximo passo recomendado
 
-Avançar para testes de integração reais com containers ou serviços controlados, cobrindo readiness, importação válida/inválida e falha de QLever/Fuseki de forma end-to-end.
+Avançar para testes de integração reais com containers ou serviços controlados, cobrindo readiness, importação válida/inválida e falha de QLever/QLever de forma end-to-end.

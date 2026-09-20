@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { ArrowUpToLine } from "lucide-react";
 import { uiText, type Language } from "../i18n";
 import { importRdf } from "../api";
@@ -10,16 +10,32 @@ type AdminInsertSectionProps = {
 
 export function AdminInsertSection({ darkMode, language }: AdminInsertSectionProps) {
   const translation = uiText[language];
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [file, setFile] = useState<File | null>(null);
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
   const handleImport = async () => {
-    const file = inputRef.current?.files?.[0];
-    if (!file) return;
+    if (!file) {
+      setMessage("Selecione um arquivo RDF antes de importar.");
+      return;
+    }
+
+    setLoading(true);
+    setMessage("");
     try {
-      const result = await importRdf(file, "icc_uvv");
+      const formatByExtension: Record<string, string> = {
+        ttl: "text/turtle",
+        rdf: "application/rdf+xml",
+        xml: "application/rdf+xml",
+        nt: "application/n-triples",
+        nq: "application/n-quads",
+      };
+      const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
+      const result = await importRdf(file, "icc_uvv", formatByExtension[extension]);
       setMessage(`Arquivo validado: ${result.tripleCount} triplas.`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Falha na importação.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -48,10 +64,19 @@ export function AdminInsertSection({ darkMode, language }: AdminInsertSectionPro
           <p className={darkMode ? "mb-4 text-sm leading-6 text-[#E8DCC2]" : "mb-4 text-sm leading-6 text-[#524332]"}>
             {translation.statsImportDescription}
           </p>
-          <input ref={inputRef} type="file" accept=".rdf,.ttl,.nt,.n3,.jsonld" className="mb-3 block w-full text-sm" />
+          <input
+            type="file"
+            accept=".rdf,.ttl,.nt,.nq,.n3,.jsonld,.xml"
+            onChange={(event) => {
+              setFile(event.target.files?.[0] ?? null);
+              setMessage("");
+            }}
+            className="mb-3 block w-full text-sm"
+          />
           <button
             type="button"
             onClick={handleImport}
+            disabled={loading}
             className={
               darkMode
                 ? "inline-flex items-center gap-2 rounded-xl border border-dashed border-[#8C6E4C] bg-[#2A2724] px-4 py-2.5 text-sm font-medium text-[#F5F1E6] transition hover:bg-[#342F2B]"
@@ -59,7 +84,7 @@ export function AdminInsertSection({ darkMode, language }: AdminInsertSectionPro
             }
           >
             <ArrowUpToLine size={16} />
-            Importar arquivo
+            {loading ? "Enviando..." : "Importar arquivo"}
           </button>
           {message && <p className="mt-3 text-sm">{message}</p>}
         </div>

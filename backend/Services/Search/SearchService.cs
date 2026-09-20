@@ -31,15 +31,16 @@ public class SearchService : ISearchService
         }
 
         var terms = request.Text.Trim();
+        var escapedTerms = EscapeSparqlString(terms);
         var query = $@"
             SELECT ?subject ?predicate ?object
             WHERE {{
-              {{ ?subject ?predicate ?object . }}
               FILTER(
-                CONTAINS(LCASE(STR(?subject)), LCASE('{EscapeSqlLike(terms)}'))
-                || CONTAINS(LCASE(STR(?predicate)), LCASE('{EscapeSqlLike(terms)}'))
-                || CONTAINS(LCASE(STR(?object)), LCASE('{EscapeSqlLike(terms)}'))
+                REGEX(STR(?subject), ""{escapedTerms}"", ""i"")
+                || REGEX(STR(?predicate), ""{escapedTerms}"", ""i"")
+                || REGEX(STR(?object), ""{escapedTerms}"", ""i"")
               )
+              ?subject ?predicate ?object .
             }}
             LIMIT {request.PageSize}
         ";
@@ -47,6 +48,10 @@ public class SearchService : ISearchService
         try
         {
             return await _qleverClient.ExecuteQueryAsync(query, request.Graph, cancellationToken);
+        }
+        catch (Exception ex) when (ex is SparqlException or TimeoutException or DependencyUnavailableException)
+        {
+            throw;
         }
         catch (Exception ex)
         {
@@ -61,11 +66,13 @@ public class SearchService : ISearchService
             throw new ArgumentException("The text for suggestions is required.", nameof(text));
         }
 
+        var escapedText = EscapeSparqlString(text.Trim());
         var query = $@"
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             SELECT DISTINCT ?label
             WHERE {{
               ?s rdfs:label ?label .
-              FILTER(CONTAINS(LCASE(STR(?label)), LCASE('{EscapeSqlLike(text.Trim())}')))
+              FILTER(REGEX(STR(?label), ""{escapedText}"", ""i""))
             }}
             LIMIT 10
         ";
@@ -74,14 +81,22 @@ public class SearchService : ISearchService
         {
             return await _qleverClient.ExecuteQueryAsync(query, null, cancellationToken);
         }
+        catch (Exception ex) when (ex is SparqlException or TimeoutException or DependencyUnavailableException)
+        {
+            throw;
+        }
         catch (Exception ex)
         {
             throw new SparqlException("Suggestions could not be generated.", ex);
         }
     }
 
-    private static string EscapeSqlLike(string value)
+    private static string EscapeSparqlString(string value)
     {
-        return value.Replace("'", "\\'");
+        return value
+            .Replace("\\", "\\\\")
+            .Replace("\"", "\\\"")
+            .Replace("\r", "\\r")
+            .Replace("\n", "\\n");
     }
 }

@@ -2,9 +2,9 @@
 
 ## Contexto atual
 
-O backend utiliza ASP.NET Core 9 com Controllers (`AddControllers` e `MapControllers`). O `WeatherForecastController` ainda é um placeholder. A infraestrutura já define um dataset Fuseki chamado `icc_uvv`, exposto na porta `3030`. As consultas SPARQL dos endpoints deverão ser executadas pelo QLever.
+O backend utiliza ASP.NET Core 9 com Controllers (`AddControllers` e `MapControllers`). O `WeatherForecastController` ainda é um placeholder. A infraestrutura já define um dataset QLever chamado `icc_uvv`, exposto na porta `3030`. As consultas SPARQL dos endpoints deverão ser executadas pelo QLever.
 
-A API deverá funcionar como camada de validação, autorização e abstração sobre o armazenamento RDF e o QLever, utilizando dotNetRDF para parsing, validação, serialização e manipulação de grafos RDF. O Fuseki pode permanecer como camada de persistência enquanto o QLever atua como mecanismo de consulta, desde que essa separação seja mantida na configuração.
+A API deverá funcionar como camada de validação, autorização e abstração sobre o armazenamento RDF e o QLever, utilizando dotNetRDF para parsing, validação, serialização e manipulação de grafos RDF. O QLever pode permanecer como camada de persistência enquanto o QLever atua como mecanismo de consulta, desde que essa separação seja mantida na configuração.
 
 ## Convenções
 
@@ -188,13 +188,13 @@ O resumo deve suportar os indicadores exibidos pela área administrativa:
 | Método | Endpoint | Finalidade |
 |---|---|---|
 | `GET` | `/health` | Verificar se a API responde |
-| `GET` | `/health/ready` | Verificar API, QLever, Fuseki e dependências |
+| `GET` | `/health/ready` | Verificar API, QLever, QLever e dependências |
 | `GET` | `/health/live` | Verificar se o processo está ativo |
 | `GET` | `/api/v1/system/status` | Retornar status detalhado ao painel administrativo |
 
 O readiness deve testar a conectividade com o QLever, a disponibilidade do
 índice configurado e a execução de uma consulta SPARQL simples no QLever. Caso
-o Fuseki permaneça como armazenamento, sua conectividade também deverá ser
+o QLever permaneça como armazenamento, sua conectividade também deverá ser
 verificada. Se o PostgreSQL for utilizado pela aplicação, sua conectividade
 deverá igualmente ser testada.
 
@@ -269,13 +269,13 @@ ou endpoints fora do escopo da etapa atual sem necessidade explícita.
    `backend/appsettings.json`, `backend/appsettings.Development.json` e
    `backend/docker-compose.yml`.
 2. Confirmar que a API usa ASP.NET Core 9 com Controllers.
-3. Confirmar que o Fuseki disponibiliza o dataset `icc_uvv`.
+3. Confirmar que o QLever disponibiliza o dataset `icc_uvv`.
 4. Verificar se já existem serviços, repositórios, DTOs, testes ou referências
    a dotNetRDF e QLever antes de criar novos arquivos.
 5. Não reutilizar `WeatherForecastController` para funcionalidades RDF.
 6. Preservar alterações não relacionadas já existentes no worktree.
 7. Antes de codificar, registrar as decisões de infraestrutura:
-   - Fuseki será o armazenamento de escrita?
+   - QLever será o armazenamento de escrita?
    - QLever será somente leitura?
    - Qual URL HTTP do QLever será utilizada?
    - O índice QLever será atualizado por importação, processo externo ou
@@ -292,8 +292,8 @@ Criar uma seção de configuração, por exemplo `Rdf`, contendo:
 ```json
 {
   "Rdf": {
-    "FusekiBaseUrl": "http://localhost:3030",
-    "FusekiDataset": "icc_uvv",
+    "QLeverBaseUrl": "http://localhost:3030",
+    "QLeverDataset": "icc_uvv",
     "QleverBaseUrl": "http://localhost:7011",
     "QleverIndex": "icc_uvv",
     "QueryTimeoutSeconds": 30,
@@ -314,7 +314,7 @@ Regras:
    estiver ausente ou inválida.
 6. Ajustar o `docker-compose.yml` somente se for necessário disponibilizar o
    QLever; nesse caso, definir volume, porta, dependências e health check sem
-   remover o Fuseki.
+   remover o QLever.
 
 Critério de conclusão: a aplicação inicia com configuração válida e falha com
 mensagem clara quando a URL ou o dataset obrigatório estiverem inválidos.
@@ -338,7 +338,7 @@ backend/
 │   ├── Search/
 │   └── Health/
 ├── Infrastructure/
-│   ├── Fuseki/
+│   ├── QLever/
 │   └── Qlever/
 ├── Options/
 ├── Middleware/
@@ -355,7 +355,7 @@ Responsabilidades:
 - `Middleware`: erros padronizados e correlação.
 - `Tests`: testes unitários e de integração.
 
-Não colocar chamadas HTTP ao QLever ou Fuseki diretamente em Controllers.
+Não colocar chamadas HTTP ao QLever ou QLever diretamente em Controllers.
 
 ### Etapa 3 — Criar o tratamento de erros
 
@@ -371,7 +371,7 @@ Não colocar chamadas HTTP ao QLever ou Fuseki diretamente em Controllers.
 4. Incluir `traceId` em toda resposta de erro.
 5. Não capturar `Exception` de forma ampla sem registrar e transformar o erro
    corretamente.
-6. Não retornar lista vazia quando QLever, Fuseki ou o parser falharem.
+6. Não retornar lista vazia quando QLever, QLever ou o parser falharem.
 
 Critério de conclusão: uma falha de dependência retorna `503`, um timeout
 retorna `504` e uma consulta inválida retorna `400`, todos com o mesmo formato.
@@ -390,11 +390,11 @@ retorna `504` e uma consulta inválida retorna `400`, todos com o mesmo formato.
    específicas.
 8. Não permitir que o cliente aceite uma URL arbitrária enviada pelo usuário.
 
-#### Cliente Fuseki/dotNetRDF
+#### Cliente QLever/dotNetRDF
 
 1. Criar uma abstração como `IRdfStore`.
 2. Usar dotNetRDF para parsear e serializar os formatos RDF.
-3. Encaminhar inserções e remoções ao Fuseki, caso ele seja o armazenamento
+3. Encaminhar inserções e remoções ao QLever, caso ele seja o armazenamento
    oficial.
 4. Associar cada importação ao grafo nomeado definido pela aplicação.
 5. Manter a escrita separada da leitura via QLever.
@@ -406,7 +406,7 @@ nenhum Controller conhece detalhes de URL, headers ou formato de transporte.
 ### Etapa 5 — Registrar dependências no `Program.cs`
 
 1. Registrar `HttpClient` nomeado ou tipado para QLever.
-2. Registrar cliente do Fuseki.
+2. Registrar cliente do QLever.
 3. Registrar opções com validação.
 4. Registrar serviços RDF, SPARQL, busca, estatísticas e health checks.
 5. Configurar `ProblemDetails` e o middleware de exceções.
@@ -421,7 +421,7 @@ nenhum Controller conhece detalhes de URL, headers ou formato de transporte.
    - chamada controlada ao QLever;
    - verificação do índice configurado;
    - consulta SPARQL mínima;
-   - verificação do Fuseki quando ele for necessário para escrita;
+   - verificação do QLever quando ele for necessário para escrita;
    - verificação do PostgreSQL somente se usado pela aplicação.
 3. Retornar `503` quando uma dependência obrigatória estiver indisponível.
 4. Evitar expor credenciais, queries internas ou detalhes de rede na resposta.
@@ -436,7 +436,7 @@ nenhum Controller conhece detalhes de URL, headers ou formato de transporte.
 5. Retornar erro `400` para RDF malformado.
 6. Retornar `422` para RDF sintaticamente válido, mas semanticamente inválido,
    quando houver regra de validação aplicável.
-7. Para `/rdf/import/validate`, não escrever no Fuseki.
+7. Para `/rdf/import/validate`, não escrever no QLever.
 8. Para `/rdf/import`, persistir no grafo escolhido após a validação.
 9. Gerar identificador de importação, registrar metadados e retornar `201` ou
    `202` conforme o processamento seja síncrono ou assíncrono.
@@ -451,7 +451,7 @@ nenhum Controller conhece detalhes de URL, headers ou formato de transporte.
 3. Implementar inserção e limpeza de conteúdo somente com autorização.
 4. Validar `graphName`, IRI, paginação e limites.
 5. Implementar recursos RDF por consultas SPARQL executadas no QLever.
-6. Para criação ou alteração, escrever no Fuseki e aplicar a estratégia de
+6. Para criação ou alteração, escrever no QLever e aplicar a estratégia de
    atualização do índice.
 7. Usar operações parametrizadas ou construção segura de SPARQL; nunca
    concatenar valores sem escaping correto.
@@ -535,7 +535,7 @@ Implementar testes de integração para:
 - consulta `ASK` executada no QLever;
 - resposta `CONSTRUCT` ou `DESCRIBE`;
 - QLever indisponível;
-- Fuseki indisponível durante uma escrita;
+- QLever indisponível durante uma escrita;
 - limites de upload e paginação;
 - tentativa de atualização não suportada.
 
@@ -545,7 +545,7 @@ descartáveis. Não executar testes destrutivos contra um ambiente compartilhado
 ### Etapa 15 — Documentação e verificação final
 
 1. Atualizar OpenAPI com requests, responses, formatos e códigos de erro.
-2. Documentar variáveis de ambiente do Fuseki e QLever.
+2. Documentar variáveis de ambiente do QLever e QLever.
 3. Atualizar `backend.http` com exemplos não destrutivos.
 4. Explicar no README como iniciar dependências e validar readiness.
 5. Executar restore, build, testes e lint disponíveis.

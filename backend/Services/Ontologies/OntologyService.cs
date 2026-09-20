@@ -1,16 +1,16 @@
 using backend.Contracts.Ontologies;
-using backend.Infrastructure.Fuseki;
+using backend.Infrastructure.Qlever;
 using System.Text.Json;
 
 namespace backend.Services.Ontologies;
 
 public class OntologyService : IOntologyService
 {
-    private readonly IFusekiClient _fusekiClient;
+    private readonly IQleverClient _qleverClient;
 
-    public OntologyService(IFusekiClient fusekiClient)
+    public OntologyService(IQleverClient qleverClient)
     {
-        _fusekiClient = fusekiClient;
+        _qleverClient = qleverClient;
     }
 
     public Task<IReadOnlyList<OntologySummaryDto>> ListAsync(CancellationToken cancellationToken = default)
@@ -45,7 +45,7 @@ public class OntologyService : IOntologyService
             LIMIT 20
         ";
 
-        var response = await _fusekiClient.ExecuteQueryAsync(query, cancellationToken: cancellationToken);
+        var response = await _qleverClient.ExecuteQueryAsync(query, cancellationToken: cancellationToken);
         return ParseValues(response, "class");
     }
 
@@ -65,7 +65,7 @@ public class OntologyService : IOntologyService
             LIMIT 20
         ";
 
-        var response = await _fusekiClient.ExecuteQueryAsync(query, cancellationToken: cancellationToken);
+        var response = await _qleverClient.ExecuteQueryAsync(query, cancellationToken: cancellationToken);
         return ParseValues(response, "property");
     }
 
@@ -82,7 +82,7 @@ public class OntologyService : IOntologyService
             }
             GROUP BY ?ontology
             """;
-        var response = await _fusekiClient.ExecuteQueryAsync(query, cancellationToken: cancellationToken);
+        var response = await _qleverClient.ExecuteQueryAsync(query, cancellationToken: cancellationToken);
         using var document = JsonDocument.Parse(response);
         return document.RootElement.GetProperty("results").GetProperty("bindings").EnumerateArray()
             .Select(binding => new OntologySummaryDto

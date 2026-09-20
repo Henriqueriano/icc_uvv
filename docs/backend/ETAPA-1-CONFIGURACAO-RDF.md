@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Definir e registrar a configuração do ambiente RDF da aplicação de forma tipada e validada, separando os parâmetros do Fuseki e do QLever da lógica de negócio e dos Controllers.
+Definir e registrar a configuração do ambiente RDF da aplicação de forma tipada e validada, separando os parâmetros do QLever e do QLever da lógica de negócio e dos Controllers.
 
 ## Implementação realizada
 
@@ -41,8 +41,8 @@ Arquivo criado:
 
 A classe contém os seguintes parâmetros:
 
-- `FusekiBaseUrl`
-- `FusekiDataset`
+- `QLeverBaseUrl`
+- `QLeverDataset`
 - `QleverBaseUrl`
 - `QleverIndex`
 - `QueryTimeoutSeconds`
@@ -68,8 +68,8 @@ A seção adicionada segue este padrão:
 
 ```json
 "Rdf": {
-  "FusekiBaseUrl": "http://localhost:3030",
-  "FusekiDataset": "icc_uvv",
+  "QLeverBaseUrl": "http://localhost:3030",
+  "QLeverDataset": "icc_uvv",
   "QleverBaseUrl": "http://localhost:7011",
   "QleverIndex": "icc_uvv",
   "QueryTimeoutSeconds": 30,
@@ -83,7 +83,7 @@ A seção adicionada segue este padrão:
 - evita hardcode de URLs e datasets no código;
 - permite ajuste por ambiente (`Development`, produção, staging etc.);
 - centraliza parâmetros de RDF em um único ponto;
-- facilita futuras integrações com QLever e Fuseki;
+- facilita futuras integrações com QLever e QLever;
 - reduz a chance de erros de configuração em produção.
 
 ## Observações
@@ -94,4 +94,4 @@ A seção adicionada segue este padrão:
 
 ## Próximo passo recomendado
 
-Implementar a etapa 2, que consiste em organizar a estrutura de camadas e registrar serviços de infraestrutura para Fuseki, QLever e RDF.
+Implementar a etapa 2, que consiste em organizar a estrutura de camadas e registrar serviços de infraestrutura para QLever, QLever e RDF.

@@ -18,24 +18,23 @@ services:
       timeout: 5s
       retries: 3
 
-  fuseki:
-    image: stain/jena-fuseki:latest
-    container_name: icc-uvv-fuseki
+  qlever:
+    image: adfreiburg/qlever:latest
+    container_name: icc-uvv-qlever
     restart: unless-stopped
+    working_dir: /data
     environment:
-      ADMIN_USERNAME: ${FUSEKI_USERNAME}
-      ADMIN_PASSWORD: ${FUSEKI_PASSWORD}
-      FUSEKI_DATASET_1: ${FUSEKI_DATASET}
-      FUSEKI_DATASET_1_RW: "true"
-      FUSEKI_DATASET_1_TYPE: tdb
+      UID: "999"
+      GID: "999"
+    command: ["-c", "if [ -f icc_uvv.meta-data.json ]; then qlever start --run-in-foreground --persist-updates; else qlever index && qlever start --run-in-foreground --persist-updates; fi"]
     ports:
-      - "3030:3030"
+      - "7011:7011"
     volumes:
-      - fuseki_data:/fuseki
+      - qlever_data:/data
     depends_on:
       postgres:
         condition: service_healthy
 
 volumes:
   postgres_data:
-  fuseki_data:
+  qlever_data:

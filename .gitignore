@@ -519,3 +519,9 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 # Finder (MacOS) folder config
 .DS_Store
+
+# Local QLever dataset and indexes
+backend/qlever/icc_uvv.nt
+backend/qlever/*.index.*
+backend/qlever/*.db
+backend/qlever/*.update-triples

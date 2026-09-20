@@ -63,7 +63,7 @@ Isso assegura que toda falha inesperada passe pelo mesmo mecanismo de resposta.
 ## Benefícios desta etapa
 
 - respostas uniformes para frontends e inteligências artificiais;
-- melhor diagnósticos ao integrar com QLever, Fuseki e validações de RDF;
+- melhor diagnósticos ao integrar com QLever, QLever e validações de RDF;
 - padronização consistente com `ProblemDetails`;
 - menor chance de erros de camada de apresentação mascararem falhas reais;
 - estrutura pronta para as próximas etapas de endpoints e health check.
@@ -76,4 +76,4 @@ Isso assegura que toda falha inesperada passe pelo mesmo mecanismo de resposta.
 
 ## Próximo passo recomendado
 
-Implementar a etapa 4, que consiste em criar os clientes de infraestrutura de maneira mais robusta, com validação de chamada, timeout e integração explícita com QLever e Fuseki.
+Implementar a etapa 4, que consiste em criar os clientes de infraestrutura de maneira mais robusta, com validação de chamada, timeout e integração explícita com QLever e QLever.

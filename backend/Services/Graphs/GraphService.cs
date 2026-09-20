@@ -1,6 +1,6 @@
 using backend.Contracts.Rdf;
 using backend.Infrastructure.Exceptions;
-using backend.Infrastructure.Fuseki;
+using backend.Infrastructure.Qlever;
 using backend.Options;
 using System.Text.Json;
 
@@ -8,18 +8,18 @@ namespace backend.Services.Graphs;
 
 public class GraphService : IGraphService
 {
-    private readonly IFusekiClient _fusekiClient;
+    private readonly IQleverClient _qleverClient;
     private readonly RdfOptions _options;
 
-    public GraphService(IFusekiClient fusekiClient, RdfOptions options)
+    public GraphService(IQleverClient qleverClient, RdfOptions options)
     {
-        _fusekiClient = fusekiClient;
+        _qleverClient = qleverClient;
         _options = options;
     }
 
     public async Task<IReadOnlyList<GraphMetadataDto>> ListAsync(CancellationToken cancellationToken = default)
     {
-        var response = await _fusekiClient.ExecuteQueryAsync(
+        var response = await _qleverClient.ExecuteQueryAsync(
             "SELECT ?graph (COUNT(*) AS ?triples) WHERE { GRAPH ?graph { ?s ?p ?o } } GROUP BY ?graph",
             cancellationToken: cancellationToken);
         using var document = JsonDocument.Parse(response);
@@ -77,7 +77,7 @@ public class GraphService : IGraphService
 
         try
         {
-            var content = await _fusekiClient.ExecuteQueryAsync(query, graphName, cancellationToken);
+            var content = await _qleverClient.ExecuteQueryAsync(query, graphName, cancellationToken);
             return new GraphContentResult
             {
                 Name = graphName,

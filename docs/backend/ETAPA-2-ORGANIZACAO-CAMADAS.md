@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Organizar a aplicação em camadas claras para que o backend RDF respeite a separação entre configuração, infraestrutura, serviços e lógica de controle. A ideia é manter Controllers enxutos e evitar acoplamento direto com HTTP, Fuseki, QLever ou dotNetRDF.
+Organizar a aplicação em camadas claras para que o backend RDF respeite a separação entre configuração, infraestrutura, serviços e lógica de controle. A ideia é manter Controllers enxutos e evitar acoplamento direto com HTTP, QLever, QLever ou dotNetRDF.
 
 ## Implementação realizada
 
@@ -10,29 +10,29 @@ Organizar a aplicação em camadas claras para que o backend RDF respeite a sepa
 
 Foram criados os diretórios iniciais:
 
-- `backend/Infrastructure/Fuseki`
+- `backend/Infrastructure/QLever`
 - `backend/Infrastructure/Qlever`
 - `backend/Services/Rdf`
 
 Essa estrutura representa a divisão proposta na etapa anterior, alinhando-se ao padrão de desenvolvimento do projeto e preparando a base para integração com RDF, QLever e consultas híbridas.
 
-### 2. Cliente de infraestrutura do Fuseki
+### 2. Cliente de infraestrutura do QLever
 
 Arquivo criado:
 
-- `backend/Infrastructure/Fuseki/IFusekiClient.cs`
-- `backend/Infrastructure/Fuseki/FusekiClient.cs`
+- `backend/Infrastructure/QLever/IQLeverClient.cs`
+- `backend/Infrastructure/QLever/QLeverClient.cs`
 
-A abstração expõe um contrato mínimo para verificação de disponibilidade do Fuseki:
+A abstração expõe um contrato mínimo para verificação de disponibilidade do QLever:
 
 ```csharp
-public interface IFusekiClient
+public interface IQLeverClient
 {
     Task<string> PingAsync(CancellationToken cancellationToken = default);
 }
 ```
 
-A implementação usa `HttpClient` com a URL base configurada em `RdfOptions.FusekiBaseUrl` e executa um simples ping ao endpoint do ambiente RDF.
+A implementação usa `HttpClient` com a URL base configurada em `RdfOptions.QLeverBaseUrl` e executa um simples ping ao endpoint do ambiente RDF.
 
 ### 3. Cliente de infraestrutura do QLever
 
@@ -65,7 +65,7 @@ Arquivos criados:
 - `backend/Services/Rdf/IRdfService.cs`
 - `backend/Services/Rdf/RdfService.cs`
 
-O serviço atua como camada de orquestração entre a infraestrutura do Fuseki e a do QLever. A implementação atual é um ponto de partida com um método de resumo de configuração:
+O serviço atua como camada de orquestração entre a infraestrutura do QLever e a do QLever. A implementação atual é um ponto de partida com um método de resumo de configuração:
 
 ```csharp
 public interface IRdfService
@@ -76,7 +76,7 @@ public interface IRdfService
 
 Ele:
 
-- chama o ping do Fuseki;
+- chama o ping do QLever;
 - executa uma query de teste no QLever;
 - retorna uma string resumida para uso futuro em health checks ou diagnóstico.
 
@@ -89,7 +89,7 @@ Arquivo atualizado:
 Foram adicionados os registros:
 
 ```csharp
-builder.Services.AddHttpClient<IFusekiClient, FusekiClient>();
+builder.Services.AddHttpClient<IQLeverClient, QLeverClient>();
 builder.Services.AddHttpClient<IQleverClient, QleverClient>();
 builder.Services.AddScoped<IRdfService, RdfService>();
 ```

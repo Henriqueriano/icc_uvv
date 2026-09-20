@@ -16,7 +16,7 @@ Este documento consolida a verificação final da arquitetura RDF, incluindo:
 
 - configuração de dependências;
 - uso do QLever como leitura;
-- uso do Fuseki como persistência e validação;
+- uso do QLever como persistência e validação;
 - autenticação por JWT;
 - proteção operacional e rate limiting;
 - testes e critérios de cobertura mínima.
@@ -84,7 +84,7 @@ Resultado verificado:
 
 ## Observações finais
 
-- a arquitetura está pronta para evoluir para integração real com Fuseki e QLever em um ambiente controlado;
+- a arquitetura está pronta para evoluir para integração real com QLever e QLever em um ambiente controlado;
 - as partes sensíveis continuam configuráveis por ambiente;
 - a aplicação não deve declarar sucesso de importação ou consulta sem validar a persistência e o resultado real da dependência externa;
 - a implementação permanece orientada à evolução incremental, preservando a separação de camadas e a clareza do fluxo de desenvolvimento.
@@ -93,7 +93,7 @@ Resultado verificado:
 
 Executar integração real com provedores de RDF em ambiente de testes com containers ou infraestrutura controlada, validando:
 
-- importação efetiva em Fuseki;
+- importação efetiva em QLever;
 - leitura em QLever;
 - sincronização de dados entre armazenamento e índice de consulta;
 - status de readiness em condições reais de falha e recuperação.

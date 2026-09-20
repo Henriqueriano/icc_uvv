@@ -2,7 +2,7 @@
 
 ## Resumo executivo
 
-O backend está em um estado de arquitetura funcional e bem organizada, com build compilando e testes automatizados passando em ambiente local. No entanto, ele ainda não está completamente funcional como sistema pronto para produção para uso real com RDF, porque algumas operações importantes continuam como scaffolding e não executam persistência real em Fuseki/QLever.
+O backend está em um estado de arquitetura funcional e bem organizada, com build compilando e testes automatizados passando em ambiente local. No entanto, ele ainda não está completamente funcional como sistema pronto para produção para uso real com RDF, porque algumas operações importantes continuam como scaffolding e não executam persistência real em QLever/QLever.
 
 Em termos práticos, o projeto está em um estado de:
 
@@ -110,7 +110,7 @@ Pontos fortes:
 Pontos frágeis:
 
 - vários endpoints ainda retornam dados simulados ou parcialmente falsos;
-- a importação de RDF valida o arquivo, mas não persiste de fato em Fuseki;
+- a importação de RDF valida o arquivo, mas não persiste de fato em QLever;
 - a leitura de grafos e estatísticas não extrai métricas reais do armazenamento;
 - `SearchController` e `SparqlController` dependem de consultas que podem falhar em runtime se QLever não estiver corretamente provisionado.
 
@@ -184,14 +184,14 @@ Status: placeholder
 
 Arquivos:
 
-- `Fuseki/FusekiClient.cs`
+- `QLever/QLeverClient.cs`
 - `Qlever/QleverClient.cs`
 - `Health/RdfHealthCheck.cs`
 - `Exceptions/*`
 
 Status: parcialmente funcional
 
-#### `FusekiClient`
+#### `QLeverClient`
 Status: básico, funcional para ping
 
 - faz `GET /$/ping`;
@@ -213,7 +213,7 @@ Isso é o ponto mais funcional do backend em integraçãp externa.
 #### `Health/RdfHealthCheck.cs`
 Status: funcional como checagem estrutural
 
-- tenta verificar readiness de QLever/Fuseki;
+- tenta verificar readiness de QLever/QLever;
 - usa abstração de health check;
 - bom para startup e status básico.
 
@@ -267,12 +267,12 @@ Resposta curta: parcialmente, mas não de forma completa.
 
 ### O que ainda não está funcional de verdade
 
-- persistência real de importação RDF em Fuseki;
+- persistência real de importação RDF em QLever;
 - leitura real de grafos por conteúdo proveniente do dataset;
 - estatísticas reais;
 - ontologias reais;
 - busca livre real em dados processados;
-- sincronização entre Fuseki e QLever em ambiente real;
+- sincronização entre QLever e QLever em ambiente real;
 - integração de ponta a ponta com os serviços externos em execução.
 
 ## Diagnóstico final
@@ -293,7 +293,7 @@ Se a pergunta for: "ele está pronto para evoluir como base de backend RDF, com 
 
 O projeto merece ser tratado como backend RDF em desenvolvimento/avançado, e não como solução final. O caminho ideal é:
 
-1. conectar Fuseki e QLever em um ambiente de teste real;
+1. conectar QLever e QLever em um ambiente de teste real;
 2. implementar persistência do endpoint de importação;
 3. remover dados mockados de grafos, ontologias e estatísticas;
 4. validar cada endpoint contra dataset real;

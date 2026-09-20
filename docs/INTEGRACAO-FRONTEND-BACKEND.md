@@ -89,7 +89,7 @@ bun install
 bun dev
 ```
 
-O PostgreSQL e o Fuseki podem ser iniciados com:
+O PostgreSQL e o QLever podem ser iniciados com:
 
 ```bash
 docker compose -f backend/docker-compose.yml up -d
@@ -102,7 +102,7 @@ docker compose -f backend/docker-compose.yml up -d
 - Para outro ambiente, altere `FRONTEND_API_URL` em `frontend/.env` sem
   modificar o código.
 - A rota de importação atualmente valida o arquivo e registra a operação,
-  mas a persistência definitiva no Fuseki ainda deve ser concluída.
+  mas a persistência definitiva no QLever ainda deve ser concluída.
 - Algumas métricas de estatísticas não possuem fonte histórica persistida e
   podem retornar zero.
 - A tela de ontologias usa dados de apresentação locais para perfil e imagem;

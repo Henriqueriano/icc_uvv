@@ -59,7 +59,7 @@ export function OntologiesSection({ darkMode, language }: OntologiesSectionProps
   useEffect(() => {
     listOntologies().then((items) => {
       if (items.length) {
-        const mapped = items.map((item) => ({ ...item, name: item.name || item.iri, image: "/logo.svg", profile: fallbackOntologies[0].profile, documentation: item.description || "Ontologia carregada do Fuseki.", terms: [] }));
+        const mapped = items.map((item) => ({ ...item, name: item.name || item.iri, image: "/logo.svg", profile: fallbackOntologies[0].profile, documentation: item.description || "Ontologia carregada do QLever.", terms: [] }));
         setOntologies(mapped);
         setSelectedOntology(mapped[0]);
       }

@@ -1,16 +1,16 @@
 using backend.Contracts.Statistics;
-using backend.Infrastructure.Fuseki;
+using backend.Infrastructure.Qlever;
 using System.Text.Json;
 
 namespace backend.Services.Statistics;
 
 public class StatisticsService : IStatisticsService
 {
-    private readonly IFusekiClient _fusekiClient;
+    private readonly IQleverClient _qleverClient;
 
-    public StatisticsService(IFusekiClient fusekiClient)
+    public StatisticsService(IQleverClient qleverClient)
     {
-        _fusekiClient = fusekiClient;
+        _qleverClient = qleverClient;
     }
 
     public async Task<StatisticsOverviewDto> GetOverviewAsync(CancellationToken cancellationToken = default)
@@ -25,7 +25,7 @@ public class StatisticsService : IStatisticsService
               OPTIONAL { ?ontology a owl:Ontology }
             }
             """;
-        var response = await _fusekiClient.ExecuteQueryAsync(query, cancellationToken: cancellationToken);
+        var response = await _qleverClient.ExecuteQueryAsync(query, cancellationToken: cancellationToken);
         using var document = JsonDocument.Parse(response);
         var binding = document.RootElement.GetProperty("results").GetProperty("bindings").EnumerateArray().SingleOrDefault();
 

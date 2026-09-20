@@ -8,19 +8,6 @@ public class RdfOptions
 
     [Required]
     [Url]
-    public string FusekiBaseUrl { get; set; } = string.Empty;
-
-    [Required]
-    public string FusekiDataset { get; set; } = string.Empty;
-
-    [Required]
-    public string FusekiUsername { get; set; } = string.Empty;
-
-    [Required]
-    public string FusekiPassword { get; set; } = string.Empty;
-
-    [Required]
-    [Url]
     public string QleverBaseUrl { get; set; } = string.Empty;
 
     [Required]

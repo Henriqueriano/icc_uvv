@@ -36,7 +36,7 @@ A validação implementada:
 - permite hosts explícitos somente quando configurados;
 - falha de forma explícita quando uma configuração obrigatória aponta para um destino proibido.
 
-Essa camada é usada na inicialização para validar as URLs do Fuseki e do QLever, reduzindo o risco de SSRF via configuração ou entrada maliciosa.
+Essa camada é usada na inicialização para validar as URLs do QLever e do QLever, reduzindo o risco de SSRF via configuração ou entrada maliciosa.
 
 ### 3. Middleware de validação de entrada
 

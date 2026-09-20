@@ -82,7 +82,7 @@ Essa biblioteca foi adotada para o parsing e validação de RDF, alinhando a imp
 - o processo está organizado em camada de serviço e contrato;
 - a aplicação mantém a estrutura de Controllers enxuta;
 - a validação responde cedo diante de arquivos inválidos;
-- é possível evoluir para importação real no Fuseki ou outro armazenamento RDF.
+- é possível evoluir para importação real no QLever ou outro armazenamento RDF.
 
 ## Observações importantes
 
