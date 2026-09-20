@@ -10,12 +10,12 @@ type AdminInsertSectionProps = {
 
 export function AdminInsertSection({ darkMode, language }: AdminInsertSectionProps) {
   const translation = uiText[language];
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const handleImport = async () => {
-    if (!file) {
-      setMessage("Selecione um arquivo RDF antes de importar.");
+    if (files.length === 0) {
+      setMessage("Selecione um arquivo ou uma pasta RDF antes de importar.");
       return;
     }
 
@@ -29,9 +29,21 @@ export function AdminInsertSection({ darkMode, language }: AdminInsertSectionPro
         nt: "application/n-triples",
         nq: "application/n-quads",
       };
-      const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
-      const result = await importRdf(file, "icc_uvv", formatByExtension[extension]);
-      setMessage(`Arquivo validado: ${result.tripleCount} triplas.`);
+      const supportedFiles = files.filter((file) => {
+        const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
+        return extension in formatByExtension;
+      });
+      if (supportedFiles.length === 0) {
+        throw new Error("Nenhum arquivo RDF compatível foi encontrado.");
+      }
+
+      let totalTriples = 0;
+      for (const file of supportedFiles) {
+        const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
+        const result = await importRdf(file, "icc_uvv", formatByExtension[extension]);
+        totalTriples += result.tripleCount;
+      }
+      setMessage(`${supportedFiles.length} arquivo(s) validado(s): ${totalTriples} triplas.`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Falha na importação.");
     } finally {
@@ -64,15 +76,27 @@ export function AdminInsertSection({ darkMode, language }: AdminInsertSectionPro
           <p className={darkMode ? "mb-4 text-sm leading-6 text-[#E8DCC2]" : "mb-4 text-sm leading-6 text-[#524332]"}>
             {translation.statsImportDescription}
           </p>
-          <input
-            type="file"
-            accept=".rdf,.ttl,.nt,.nq,.n3,.jsonld,.xml"
-            onChange={(event) => {
-              setFile(event.target.files?.[0] ?? null);
-              setMessage("");
-            }}
-            className="mb-3 block w-full text-sm"
-          />
+          <label
+            htmlFor="rdf-file"
+            className={
+              darkMode
+                ? "mb-3 flex min-h-12 w-full cursor-pointer items-center rounded-xl border border-[#8C6E4C] bg-[#2A2724] px-4 py-3 text-sm text-[#E8DCC2] transition hover:bg-[#342F2B]"
+                : "mb-3 flex min-h-12 w-full cursor-pointer items-center rounded-xl border border-[#A57A4B] bg-[#FDFBE8] px-4 py-3 text-sm text-[#524332] transition hover:bg-[#F5EFC8]"
+            }
+          >
+            <span className="truncate">{files.length === 1 ? files[0].name : files.length > 1 ? `${files.length} arquivos selecionados` : "Selecionar arquivo RDF"}</span>
+            <input
+              id="rdf-file"
+              type="file"
+              multiple
+              accept=".rdf,.ttl,.nt,.nq,.n3,.jsonld,.xml"
+              onChange={(event) => {
+                setFiles(event.target.files ? Array.from(event.target.files) : []);
+                setMessage("");
+              }}
+              className="sr-only"
+            />
+          </label>
           <button
             type="button"
             onClick={handleImport}
@@ -84,7 +108,7 @@ export function AdminInsertSection({ darkMode, language }: AdminInsertSectionPro
             }
           >
             <ArrowUpToLine size={16} />
-            {loading ? "Enviando..." : "Importar arquivo"}
+            {loading ? "Enviando..." : files.length > 1 ? "Importar arquivos" : "Importar arquivo"}
           </button>
           {message && <p className="mt-3 text-sm">{message}</p>}
         </div>

@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { uiText, type Language } from "../i18n";
-import { Settings } from 'lucide-react';
+import { Eye, EyeOff, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { login } from "../api";
 
@@ -17,6 +17,7 @@ export function LoginView({ darkMode, language, isAdmin, onLogin, onLogout }: Lo
   const navigate = useNavigate();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const shellClass = darkMode
     ? "mx-auto w-[min(1000px,calc(100%-24px))] p-5"
     : "mx-auto w-[min(1000px,calc(100%-24px))] p-5";
@@ -84,7 +85,25 @@ export function LoginView({ darkMode, language, isAdmin, onLogin, onLogout }: Lo
 
             <label className={fieldLabelClass}>
               <span>{translation.password}</span>
-              <input name="password" required type="password" placeholder="••••••••" className={inputClass} />
+              <div className="relative">
+                <input
+                  name="password"
+                  required
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  className={`${inputClass} pr-12`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((visible) => !visible)}
+                  aria-label={showPassword ? "Ocultar senha" : "Revelar senha"}
+                  className={darkMode
+                    ? "absolute right-3 top-1/2 -translate-y-1/2 text-[#E8DCC2]"
+                    : "absolute right-3 top-1/2 -translate-y-1/2 text-[#6B543A]"}
+                >
+                  {showPassword ? <EyeOff size={20} aria-hidden="true" /> : <Eye size={20} aria-hidden="true" />}
+                </button>
+              </div>
             </label>
 
             <div className={helperClass}>
