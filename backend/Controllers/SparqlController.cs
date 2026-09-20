@@ -1,5 +1,6 @@
 using backend.Contracts.Sparql;
 using backend.Services.Sparql;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
@@ -15,6 +16,7 @@ public class SparqlController : ControllerBase
         _sparqlService = sparqlService;
     }
 
+    [Authorize(Policy = "RdfRead")]
     [HttpPost("query")]
     public async Task<IActionResult> Query([FromBody] SparqlQueryRequest request, CancellationToken cancellationToken)
     {
@@ -22,6 +24,7 @@ public class SparqlController : ControllerBase
         return Content(result, "application/sparql-results+json");
     }
 
+    [Authorize(Policy = "RdfRead")]
     [HttpPost("validate")]
     public async Task<IActionResult> Validate([FromBody] SparqlQueryRequest request, CancellationToken cancellationToken)
     {

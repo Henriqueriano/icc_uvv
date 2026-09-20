@@ -1,5 +1,6 @@
 using backend.Contracts.Rdf;
 using backend.Services.RdfValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
@@ -25,6 +26,7 @@ public class RdfDocumentsController : ControllerBase
         return Ok(result);
     }
 
+    [Authorize(Policy = "RdfWrite")]
     [HttpPost("import")]
     public async Task<ActionResult<object>> Import(
         IFormFile file,
