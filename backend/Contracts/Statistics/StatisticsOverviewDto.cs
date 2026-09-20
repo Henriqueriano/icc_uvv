@@ -8,4 +8,5 @@ public class StatisticsOverviewDto
     public int FreeSearches { get; set; }
     public int AverageResponseTimeMs { get; set; }
     public double SuccessRate { get; set; }
+    public double UsageIndex { get; set; }
 }

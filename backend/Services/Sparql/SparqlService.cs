@@ -1,16 +1,20 @@
+using System.Diagnostics;
 using backend.Contracts.Sparql;
 using backend.Infrastructure.Exceptions;
 using backend.Infrastructure.Qlever;
+using backend.Services.Statistics;
 
 namespace backend.Services.Sparql;
 
 public class SparqlService : ISparqlService
 {
     private readonly IQleverClient _qleverClient;
+    private readonly IOperationalMetricsService _metricsService;
 
-    public SparqlService(IQleverClient qleverClient)
+    public SparqlService(IQleverClient qleverClient, IOperationalMetricsService? metricsService = null)
     {
         _qleverClient = qleverClient;
+        _metricsService = metricsService ?? new OperationalMetricsService();
     }
 
     public async Task<string> ExecuteQueryAsync(SparqlQueryRequest request, CancellationToken cancellationToken = default)
@@ -35,9 +39,13 @@ public class SparqlService : ISparqlService
             throw new SparqlException("Write operations are not allowed through the read-only QLever query endpoint.");
         }
 
+        var stopwatch = Stopwatch.StartNew();
+        var success = false;
         try
         {
-            return await _qleverClient.ExecuteQueryAsync(normalizedQuery, defaultGraph, cancellationToken);
+            var result = await _qleverClient.ExecuteQueryAsync(normalizedQuery, defaultGraph, cancellationToken);
+            success = true;
+            return result;
         }
         catch (Exception ex) when (ex is TimeoutException or DependencyUnavailableException)
         {
@@ -46,6 +54,11 @@ public class SparqlService : ISparqlService
         catch (Exception ex)
         {
             throw new SparqlException("The SPARQL query could not be executed.", ex);
+        }
+        finally
+        {
+            stopwatch.Stop();
+            _metricsService.RecordSparqlQuery(stopwatch.ElapsedMilliseconds, success);
         }
     }
 

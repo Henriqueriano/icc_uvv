@@ -1,7 +1,9 @@
+using System.Diagnostics;
 using backend.Contracts.Search;
 using backend.Infrastructure.Exceptions;
 using backend.Infrastructure.Ollama;
 using backend.Infrastructure.Qlever;
+using backend.Services.Statistics;
 using System.Text.Json.Nodes;
 
 namespace backend.Services.Search;
@@ -10,11 +12,13 @@ public class SearchService : ISearchService
 {
     private readonly IQleverClient _qleverClient;
     private readonly IOllamaClient _ollamaClient;
+    private readonly IOperationalMetricsService _metricsService;
 
-    public SearchService(IQleverClient qleverClient, IOllamaClient ollamaClient)
+    public SearchService(IQleverClient qleverClient, IOllamaClient ollamaClient, IOperationalMetricsService? metricsService = null)
     {
         _qleverClient = qleverClient;
         _ollamaClient = ollamaClient;
+        _metricsService = metricsService ?? new OperationalMetricsService();
     }
 
     public async Task<string> SearchAsync(SearchRequest request, CancellationToken cancellationToken = default)
@@ -34,6 +38,8 @@ public class SearchService : ISearchService
             throw new ArgumentException("Page and page size values must be valid.", nameof(request));
         }
 
+        var stopwatch = Stopwatch.StartNew();
+        var success = false;
         var query = string.Empty;
         try
         {
@@ -44,6 +50,7 @@ public class SearchService : ISearchService
                 {
                     query = await GenerateQueryAsync(request.Text.Trim(), request.PageSize, qleverError, cancellationToken);
                     var qleverResponse = await _qleverClient.ExecuteQueryAsync(query, request.Graph, cancellationToken);
+                    success = true;
                     return AddGeneratedQuery(qleverResponse, query);
                 }
                 catch (SparqlException ex) when (attempt < 2)
@@ -69,6 +76,11 @@ public class SearchService : ISearchService
         catch (Exception ex)
         {
             throw new SparqlException("The free search could not be completed.", ex);
+        }
+        finally
+        {
+            stopwatch.Stop();
+            _metricsService.RecordFreeSearch(stopwatch.ElapsedMilliseconds, success);
         }
     }
 

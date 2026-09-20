@@ -73,8 +73,58 @@ export function listOntologies() {
   return request<Array<{ iri: string; name: string; description: string; namespace: string; classCount: number; propertyCount: number }>>("/ontologies");
 }
 
+export type ComponentStatus = {
+  status: string;
+  isHealthy: boolean;
+  latencyMs?: number;
+  details?: string;
+};
+
+export type SystemStatus = {
+  status: "ready" | "not_ready" | "degraded";
+  integrity: string;
+  timestamp: string;
+  server: ComponentStatus;
+  rdfBase: ComponentStatus;
+  database: ComponentStatus;
+  aiService: ComponentStatus;
+  cache: ComponentStatus;
+};
+
+export type StatisticsOverview = {
+  rdfDocuments: number;
+  ontologies: number;
+  sparqlQueries: number;
+  freeSearches: number;
+  averageResponseTimeMs: number;
+  successRate: number;
+  usageIndex: number;
+};
+
 export function getStatistics() {
-  return request<{ rdfDocuments: number; ontologies: number; sparqlQueries: number; freeSearches: number; averageResponseTimeMs: number; successRate: number }>("/statistics/overview");
+  return request<StatisticsOverview>("/statistics/overview");
+}
+
+export async function getSystemStatus(): Promise<SystemStatus> {
+  try {
+    return await request<SystemStatus>("/health/status");
+  } catch {
+    return {
+      status: "not_ready",
+      integrity: "Degradada",
+      timestamp: new Date().toISOString(),
+      server: { status: "Indisponível", isHealthy: false },
+      rdfBase: { status: "Indisponível", isHealthy: false },
+      database: { status: "Indisponível", isHealthy: false },
+      aiService: { status: "Indisponível", isHealthy: false },
+      cache: { status: "Indisponível", isHealthy: false },
+    };
+  }
+}
+
+export async function getSystemHealth() {
+  const status = await getSystemStatus();
+  return { status: status.status === "ready" ? "ready" : "not_ready" };
 }
 
 export function importRdf(file: File, graphName: string, format?: string) {

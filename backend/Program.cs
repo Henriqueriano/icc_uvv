@@ -92,6 +92,9 @@ builder.Services.AddHttpClient<IOllamaClient, OllamaClient>((sp, client) =>
     client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
 });
 
+builder.Services.AddMemoryCache();
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton<IOperationalMetricsService, OperationalMetricsService>();
 builder.Services.AddScoped<IRdfService, RdfService>();
 builder.Services.AddScoped<IRdfHealthCheck, RdfHealthCheck>();
 builder.Services.AddScoped<IRdfValidationService, RdfValidationService>();
