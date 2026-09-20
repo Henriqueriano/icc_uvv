@@ -18,8 +18,20 @@ builder.Services.AddOptions<RdfOptions>()
 builder.Services.AddSingleton(sp =>
     sp.GetRequiredService<IOptions<RdfOptions>>().Value);
 
-builder.Services.AddHttpClient<IFusekiClient, FusekiClient>();
-builder.Services.AddHttpClient<IQleverClient, QleverClient>();
+builder.Services.AddHttpClient<IFusekiClient, FusekiClient>((sp, client) =>
+{
+    var options = sp.GetRequiredService<RdfOptions>();
+    client.BaseAddress = new Uri(options.FusekiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(options.QueryTimeoutSeconds);
+});
+
+builder.Services.AddHttpClient<IQleverClient, QleverClient>((sp, client) =>
+{
+    var options = sp.GetRequiredService<RdfOptions>();
+    client.BaseAddress = new Uri(options.QleverBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(options.QueryTimeoutSeconds);
+});
+
 builder.Services.AddScoped<IRdfService, RdfService>();
 
 builder.Services.AddProblemDetails();
