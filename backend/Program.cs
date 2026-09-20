@@ -1,9 +1,12 @@
 using System.Text;
+using System.Threading.RateLimiting;
 using backend.Infrastructure.Fuseki;
 using backend.Infrastructure.Health;
 using backend.Infrastructure.Qlever;
+using backend.Infrastructure.Security;
 using backend.Middleware;
 using backend.Options;
+using backend.Services.Auditing;
 using backend.Services.Graphs;
 using backend.Services.Ontologies;
 using backend.Services.Rdf;
@@ -12,12 +15,12 @@ using backend.Services.Search;
 using backend.Services.Sparql;
 using backend.Services.Statistics;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddControllers();
 
 builder.Services.AddOptions<RdfOptions>()
@@ -30,11 +33,21 @@ builder.Services.AddOptions<AuthOptions>()
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
-builder.Services.AddSingleton(sp =>
-    sp.GetRequiredService<IOptions<RdfOptions>>().Value);
+builder.Services.AddOptions<SecurityOptions>()
+    .BindConfiguration(SecurityOptions.SectionName)
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
 
-builder.Services.AddSingleton(sp =>
-    sp.GetRequiredService<IOptions<AuthOptions>>().Value);
+var rdfOptions = builder.Configuration.GetSection(RdfOptions.SectionName).Get<RdfOptions>() ?? new RdfOptions();
+var authOptions = builder.Configuration.GetSection(AuthOptions.SectionName).Get<AuthOptions>() ?? new AuthOptions();
+var securityOptions = builder.Configuration.GetSection(SecurityOptions.SectionName).Get<SecurityOptions>() ?? new SecurityOptions();
+
+SecurityUrlValidator.ValidateConfiguredUrl(rdfOptions.FusekiBaseUrl, nameof(RdfOptions.FusekiBaseUrl), securityOptions);
+SecurityUrlValidator.ValidateConfiguredUrl(rdfOptions.QleverBaseUrl, nameof(RdfOptions.QleverBaseUrl), securityOptions);
+
+builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<RdfOptions>>().Value);
+builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<AuthOptions>>().Value);
+builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<SecurityOptions>>().Value);
 
 builder.Services.AddHttpClient<IFusekiClient, FusekiClient>((sp, client) =>
 {
@@ -58,8 +71,7 @@ builder.Services.AddScoped<ISparqlService, SparqlService>();
 builder.Services.AddScoped<ISearchService, SearchService>();
 builder.Services.AddScoped<IOntologyService, OntologyService>();
 builder.Services.AddScoped<IStatisticsService, StatisticsService>();
-
-var authOptions = builder.Configuration.GetSection(AuthOptions.SectionName).Get<AuthOptions>() ?? new AuthOptions();
+builder.Services.AddScoped<IAuditService, AuditService>();
 
 builder.Services.AddAuthentication(options =>
 {
@@ -90,27 +102,67 @@ builder.Services.AddAuthorization(options =>
         policy.RequireAuthenticatedUser());
 });
 
-builder.Services.AddProblemDetails();
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+    options.AddPolicy("default", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.User.Identity?.Name ?? httpContext.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = securityOptions.RateLimitPerMinute,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
+
+    options.AddPolicy("auth", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = securityOptions.AuthRateLimitPerMinute,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
+
+    options.AddPolicy("search", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.User.Identity?.Name ?? httpContext.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = securityOptions.SearchRateLimitPerMinute,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
+});
+
+builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
+builder.Services.AddSwaggerGen();
+builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseMiddleware<SecurityValidationMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
-app.MapHealthChecks("/health");
-app.MapHealthChecks("/health/ready");
+app.MapHealthChecks("/health/live");
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
+app.UseRateLimiter();
 app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
-

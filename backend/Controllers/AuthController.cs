@@ -1,32 +1,38 @@
+using backend.Contracts.Auth;
+using backend.Options;
+using backend.Services.Auditing;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using backend.Contracts.Auth;
-using backend.Options;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 
 namespace backend.Controllers;
 
 [ApiController]
 [Route("api/v1/auth")]
+[EnableRateLimiting("auth")]
 public class AuthController : ControllerBase
 {
     private readonly AuthOptions _authOptions;
+    private readonly IAuditService _auditService;
 
-    public AuthController(IOptions<AuthOptions> authOptions)
+    public AuthController(IOptions<AuthOptions> authOptions, IAuditService auditService)
     {
         _authOptions = authOptions.Value;
+        _auditService = auditService;
     }
 
     [AllowAnonymous]
     [HttpPost("token")]
-    public IActionResult Token([FromBody] AuthTokenRequest request)
+    public async Task<IActionResult> Token([FromBody] AuthTokenRequest request, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
         {
+            await _auditService.AuditAsync("auth-token", "credentials", "anonymous", "missing username or password", false, cancellationToken);
             return BadRequest(new ValidationProblemDetails(new Dictionary<string, string[]>
             {
                 ["credentials"] = ["Username and password are required."]
@@ -38,6 +44,7 @@ public class AuthController : ControllerBase
 
         if (!isValidCredentials)
         {
+            await _auditService.AuditAsync("auth-token", "credentials", request.Username, "invalid credentials", false, cancellationToken);
             return Unauthorized();
         }
 
@@ -59,6 +66,8 @@ public class AuthController : ControllerBase
             claims: claims,
             expires: expires,
             signingCredentials: credentials);
+
+        await _auditService.AuditAsync("auth-token", "credentials", request.Username, "token issued successfully", true, cancellationToken);
 
         return Ok(new AuthTokenResponse
         {

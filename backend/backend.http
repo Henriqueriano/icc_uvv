@@ -1,6 +1,67 @@
 @backend_HostAddress = http://localhost:5079
 
-GET {{backend_HostAddress}}/weatherforecast/
-Accept: application/json
+### Emitir token JWT
+POST {{backend_HostAddress}}/api/v1/auth/token
+Content-Type: application/json
+
+{
+  "username": "rdf-admin",
+  "password": "ChangeMe123!"
+}
+
+### Validar RDF
+POST {{backend_HostAddress}}/api/v1/rdf/import/validate
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary
+
+------WebKitFormBoundary
+Content-Disposition: form-data; name="file"; filename="sample.ttl"
+Content-Type: text/turtle
+
+@prefix ex: <http://example.org/> .
+ex:s ex:p ex:o .
+------WebKitFormBoundary--
+
+### Importar RDF (autorizado)
+POST {{backend_HostAddress}}/api/v1/rdf/import
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary
+
+------WebKitFormBoundary
+Content-Disposition: form-data; name="file"; filename="sample.ttl"
+Content-Type: text/turtle
+
+@prefix ex: <http://example.org/> .
+ex:s ex:p ex:o .
+------WebKitFormBoundary
+Content-Disposition: form-data; name="format"
+
+text/turtle
+------WebKitFormBoundary
+Content-Disposition: form-data; name="graphName"
+
+icc_uvv
+------WebKitFormBoundary--
+
+### Consultar SPARQL
+POST {{backend_HostAddress}}/api/v1/sparql/query
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "query": "SELECT * WHERE { ?s ?p ?o } LIMIT 10",
+  "defaultGraph": "icc_uvv"
+}
+
+### Busca livre
+POST {{backend_HostAddress}}/api/v1/search
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "text": "example",
+  "page": 1,
+  "pageSize": 10,
+  "graph": "icc_uvv"
+}
 
 ###

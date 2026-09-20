@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using backend.Infrastructure.Exceptions;
@@ -40,7 +41,12 @@ public class ExceptionHandlingMiddleware
             context.Response.ContentType = "application/problem+json";
             context.Response.StatusCode = problemDetails.Status ?? StatusCodes.Status500InternalServerError;
 
-            await context.Response.WriteAsJsonAsync(problemDetails);
+            var json = JsonSerializer.Serialize(problemDetails, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
+
+            await context.Response.WriteAsync(json);
         }
     }
 
