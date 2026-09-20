@@ -1,5 +1,6 @@
 using backend.Infrastructure.Fuseki;
 using backend.Infrastructure.Qlever;
+using backend.Middleware;
 using backend.Options;
 using backend.Services.Rdf;
 using Microsoft.Extensions.Options;
@@ -21,10 +22,14 @@ builder.Services.AddHttpClient<IFusekiClient, FusekiClient>();
 builder.Services.AddHttpClient<IQleverClient, QleverClient>();
 builder.Services.AddScoped<IRdfService, RdfService>();
 
+builder.Services.AddProblemDetails();
+
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
