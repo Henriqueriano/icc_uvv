@@ -1,4 +1,5 @@
 using backend.Infrastructure.Fuseki;
+using backend.Infrastructure.Health;
 using backend.Infrastructure.Qlever;
 using backend.Middleware;
 using backend.Options;
@@ -33,6 +34,7 @@ builder.Services.AddHttpClient<IQleverClient, QleverClient>((sp, client) =>
 });
 
 builder.Services.AddScoped<IRdfService, RdfService>();
+builder.Services.AddScoped<IRdfHealthCheck, RdfHealthCheck>();
 
 builder.Services.AddProblemDetails();
 
@@ -43,16 +45,17 @@ var app = builder.Build();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
+app.MapHealthChecks("/health");
+app.MapHealthChecks("/health/ready");
+
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
+
