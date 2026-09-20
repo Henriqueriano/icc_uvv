@@ -9,6 +9,7 @@ using backend.Services.Rdf;
 using backend.Services.RdfValidation;
 using backend.Services.Search;
 using backend.Services.Sparql;
+using backend.Services.Statistics;
 using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -45,6 +46,7 @@ builder.Services.AddScoped<IGraphService, GraphService>();
 builder.Services.AddScoped<ISparqlService, SparqlService>();
 builder.Services.AddScoped<ISearchService, SearchService>();
 builder.Services.AddScoped<IOntologyService, OntologyService>();
+builder.Services.AddScoped<IStatisticsService, StatisticsService>();
 
 builder.Services.AddProblemDetails();
 
