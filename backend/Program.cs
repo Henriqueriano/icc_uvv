@@ -4,6 +4,7 @@ using backend.Infrastructure.Qlever;
 using backend.Middleware;
 using backend.Options;
 using backend.Services.Rdf;
+using backend.Services.RdfValidation;
 using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -35,6 +36,7 @@ builder.Services.AddHttpClient<IQleverClient, QleverClient>((sp, client) =>
 
 builder.Services.AddScoped<IRdfService, RdfService>();
 builder.Services.AddScoped<IRdfHealthCheck, RdfHealthCheck>();
+builder.Services.AddScoped<IRdfValidationService, RdfValidationService>();
 
 builder.Services.AddProblemDetails();
 
