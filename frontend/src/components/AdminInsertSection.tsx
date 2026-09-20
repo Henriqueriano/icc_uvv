@@ -1,5 +1,7 @@
+import { useRef, useState } from "react";
 import { ArrowUpToLine } from "lucide-react";
 import { uiText, type Language } from "../i18n";
+import { importRdf } from "../api";
 
 type AdminInsertSectionProps = {
   darkMode: boolean;
@@ -8,6 +10,18 @@ type AdminInsertSectionProps = {
 
 export function AdminInsertSection({ darkMode, language }: AdminInsertSectionProps) {
   const translation = uiText[language];
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [message, setMessage] = useState("");
+  const handleImport = async () => {
+    const file = inputRef.current?.files?.[0];
+    if (!file) return;
+    try {
+      const result = await importRdf(file, "icc_uvv");
+      setMessage(`Arquivo validado: ${result.tripleCount} triplas.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Falha na importação.");
+    }
+  };
 
   return (
     <section
@@ -34,8 +48,10 @@ export function AdminInsertSection({ darkMode, language }: AdminInsertSectionPro
           <p className={darkMode ? "mb-4 text-sm leading-6 text-[#E8DCC2]" : "mb-4 text-sm leading-6 text-[#524332]"}>
             {translation.statsImportDescription}
           </p>
+          <input ref={inputRef} type="file" accept=".rdf,.ttl,.nt,.n3,.jsonld" className="mb-3 block w-full text-sm" />
           <button
             type="button"
+            onClick={handleImport}
             className={
               darkMode
                 ? "inline-flex items-center gap-2 rounded-xl border border-dashed border-[#8C6E4C] bg-[#2A2724] px-4 py-2.5 text-sm font-medium text-[#F5F1E6] transition hover:bg-[#342F2B]"
@@ -45,6 +61,7 @@ export function AdminInsertSection({ darkMode, language }: AdminInsertSectionPro
             <ArrowUpToLine size={16} />
             Importar arquivo
           </button>
+          {message && <p className="mt-3 text-sm">{message}</p>}
         </div>
 
         <div className={darkMode ? "rounded-2xl bg-[#171614] p-5" : "rounded-2xl bg-[#FDFBE8] p-5"}>

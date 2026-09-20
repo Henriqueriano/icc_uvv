@@ -2,14 +2,15 @@ type AdminStatisticsSectionProps = {
   darkMode: boolean;
 };
 
-const stats = [
-  { label: "Arquivos RDF", value: "1.284", accent: "#B78C5A" },
-  { label: "Ontologias", value: "42", accent: "#CDAE7D" },
-  { label: "Consultas SPARQL", value: "8.9k", accent: "#D6B88F" },
-  { label: "Buscas livres", value: "24.3k", accent: "#A66F47" },
-];
-
 export function AdminStatisticsSection({ darkMode }: AdminStatisticsSectionProps) {
+  const [data, setData] = useState({ rdfDocuments: 0, ontologies: 0, sparqlQueries: 0, freeSearches: 0, averageResponseTimeMs: 0, successRate: 0 });
+  useEffect(() => { getStatistics().then(setData).catch(() => undefined); }, []);
+  const stats = [
+    { label: "Arquivos RDF", value: data.rdfDocuments.toLocaleString("pt-BR"), accent: "#B78C5A" },
+    { label: "Ontologias", value: data.ontologies.toLocaleString("pt-BR"), accent: "#CDAE7D" },
+    { label: "Consultas SPARQL", value: data.sparqlQueries.toLocaleString("pt-BR"), accent: "#D6B88F" },
+    { label: "Buscas livres", value: data.freeSearches.toLocaleString("pt-BR"), accent: "#A66F47" },
+  ];
   return (
     <>
       <div className="mb-6 text-center">
@@ -88,12 +89,12 @@ export function AdminStatisticsSection({ darkMode }: AdminStatisticsSectionProps
         <div className="grid gap-4 md:grid-cols-3">
           <div className={darkMode ? "rounded-xl bg-[#171614] p-4" : "rounded-xl bg-[#FDFBE8] p-4"}>
             <div className={darkMode ? "text-sm text-[#E8DCC2]" : "text-sm text-[#524332]"}>Tempo médio de resposta</div>
-            <div className={darkMode ? "mt-2 text-2xl font-bold text-[#F5F1E6]" : "mt-2 text-2xl font-bold text-[#2A1F16]"}>182 ms</div>
+            <div className={darkMode ? "mt-2 text-2xl font-bold text-[#F5F1E6]" : "mt-2 text-2xl font-bold text-[#2A1F16]"}>{data.averageResponseTimeMs} ms</div>
           </div>
 
           <div className={darkMode ? "rounded-xl bg-[#171614] p-4" : "rounded-xl bg-[#FDFBE8] p-4"}>
             <div className={darkMode ? "text-sm text-[#E8DCC2]" : "text-sm text-[#524332]"}>Taxa de sucesso</div>
-            <div className={darkMode ? "mt-2 text-2xl font-bold text-[#F5F1E6]" : "mt-2 text-2xl font-bold text-[#2A1F16]"}>99.4%</div>
+            <div className={darkMode ? "mt-2 text-2xl font-bold text-[#F5F1E6]" : "mt-2 text-2xl font-bold text-[#2A1F16]"}>{data.successRate}%</div>
           </div>
 
           <div className={darkMode ? "rounded-xl bg-[#171614] p-4" : "rounded-xl bg-[#FDFBE8] p-4"}>
@@ -107,3 +108,5 @@ export function AdminStatisticsSection({ darkMode }: AdminStatisticsSectionProps
 }
 
 export default AdminStatisticsSection;
+import { useEffect, useState } from "react";
+import { getStatistics } from "../api";

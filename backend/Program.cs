@@ -24,6 +24,13 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Frontend", policy =>
+        policy.WithOrigins("http://localhost:4040", "http://127.0.0.1:4040")
+            .AllowAnyHeader()
+            .AllowAnyMethod());
+});
 
 builder.Services.AddOptions<RdfOptions>()
     .BindConfiguration(RdfOptions.SectionName)
@@ -153,6 +160,7 @@ var app = builder.Build();
 
 await DatabaseInitializer.InitializeAsync(app.Services);
 
+app.UseCors("Frontend");
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseMiddleware<SecurityValidationMiddleware>();
 

@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { uiText, type Language } from "../i18n";
 import { ArrowRight } from "lucide-react";
 import { SearchTabs } from "./SearchTabs";
+import { executeSparql, search } from "../api";
 
 type SearchSectionProps = {
   searchView: "free" | "sparql";
@@ -12,6 +13,8 @@ type SearchSectionProps = {
 
 export function SearchSection({ searchView, onSearchViewChange, darkMode, language }: SearchSectionProps) {
   const [searchResult, setSearchResult] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const translation = uiText[language];
   const panelClass = darkMode
     ? "rounded-[18px] border border-[#453F39] bg-[#2A2724] p-5"
@@ -38,11 +41,20 @@ export function SearchSection({ searchView, onSearchViewChange, darkMode, langua
     ? "mt-5 min-h-[220px] w-full rounded-[18px] border border-[#453F39] bg-[#2A2724] p-6"
     : "mt-5 min-h-[220px] w-full rounded-[18px] border border-[#E7DDB3] bg-[#F4EBC9] p-6";
 
-  const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSearchSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const query = String(formData.get("query") ?? "").trim();
-    setSearchResult(query);
+    setLoading(true);
+    setError("");
+    try {
+      const result = searchView === "free" ? await search(query) : await executeSparql(query);
+      setSearchResult(JSON.stringify(result, null, 2));
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Falha ao consultar a API.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -59,7 +71,7 @@ export function SearchSection({ searchView, onSearchViewChange, darkMode, langua
               <form onSubmit={handleSearchSubmit} className="flex w-full max-w-[900px] flex-1 items-center justify-center gap-3">
                 <textarea id="free-search" name="query" placeholder={translation.freeSearchInput} className={inputClass} />
                 <button type="submit" className={submitClass} aria-label={translation.freeSearch}>
-                  <ArrowRight size={22} aria-hidden="true" />
+                  {loading ? "..." : <ArrowRight size={22} aria-hidden="true" />}
                 </button>
               </form>
             </div>
@@ -74,7 +86,7 @@ export function SearchSection({ searchView, onSearchViewChange, darkMode, langua
                   className={inputClass}
                 />
                 <button type="submit" className={submitClass} aria-label={translation.sparql}>
-                  <ArrowRight size={22} aria-hidden="true" />
+                  {loading ? "..." : <ArrowRight size={22} aria-hidden="true" />}
                 </button>
               </form>
             </div>
@@ -84,9 +96,7 @@ export function SearchSection({ searchView, onSearchViewChange, darkMode, langua
 
       <div className={lowerSectionClass}>
         <h3 className={darkMode ? "mb-2 text-xl font-semibold text-[#F5F1E6]" : "mb-2 text-xl font-semibold text-[#2A1F16]"}>{translation.lowerSection}</h3>
-        <p className={secondaryTextClass}>
-          {searchResult ? `Resultados da busca por: ${searchResult}` : translation.lowerSectionText}
-        </p>
+        {error ? <p className="whitespace-pre-wrap text-sm text-red-700">{error}</p> : searchResult ? <pre className="max-h-96 overflow-auto whitespace-pre-wrap text-sm">{searchResult}</pre> : <p className={secondaryTextClass}>{translation.lowerSectionText}</p>}
       </div>
     </>
   );

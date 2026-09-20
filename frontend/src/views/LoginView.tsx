@@ -1,19 +1,22 @@
-import type { FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { uiText, type Language } from "../i18n";
 import { Settings } from 'lucide-react';
 import { useNavigate } from "react-router-dom";
+import { login } from "../api";
 
 type LoginViewProps = {
   darkMode: boolean;
   language: Language;
   isAdmin: boolean;
-  onLogin: () => void;
+  onLogin: (token: string) => void;
   onLogout: () => void;
 };
 
 export function LoginView({ darkMode, language, isAdmin, onLogin, onLogout }: LoginViewProps) {
   const translation = uiText[language];
   const navigate = useNavigate();
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const shellClass = darkMode
     ? "mx-auto w-[min(1000px,calc(100%-24px))] p-5"
     : "mx-auto w-[min(1000px,calc(100%-24px))] p-5";
@@ -46,10 +49,20 @@ export function LoginView({ darkMode, language, isAdmin, onLogin, onLogout }: Lo
     ? "mt-2 h-12 rounded-xl bg-[#4A3B32] font-bold text-[#F5F1E6]"
     : "mt-2 h-12 rounded-xl bg-[#E7D89B] font-bold text-[#2A1F16]";
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    onLogin();
-    navigate("/admin/stats");
+    const formData = new FormData(event.currentTarget);
+    setLoading(true);
+    setError("");
+    try {
+      const response = await login(String(formData.get("username") ?? ""), String(formData.get("password") ?? ""));
+      onLogin(response.accessToken);
+      navigate("/admin/stats");
+    } catch {
+      setError("Não foi possível autenticar. Verifique suas credenciais e se a API está disponível.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -66,12 +79,12 @@ export function LoginView({ darkMode, language, isAdmin, onLogin, onLogout }: Lo
           <form onSubmit={handleSubmit} className="mt-7 flex flex-col gap-5">
             <label className={fieldLabelClass}>
               <span>{translation.email}</span>
-              <input type="email" placeholder="seu@email.com" className={inputClass} />
+              <input name="username" required type="text" placeholder="usuário" className={inputClass} />
             </label>
 
             <label className={fieldLabelClass}>
               <span>{translation.password}</span>
-              <input type="password" placeholder="••••••••" className={inputClass} />
+              <input name="password" required type="password" placeholder="••••••••" className={inputClass} />
             </label>
 
             <div className={helperClass}>
@@ -86,8 +99,9 @@ export function LoginView({ darkMode, language, isAdmin, onLogin, onLogout }: Lo
             </div>
 
             <button type="submit" className={submitClass}>
-              {translation.login}
+              {loading ? "Entrando..." : translation.login}
             </button>
+            {error && <p className="text-sm text-red-700">{error}</p>}
 
             {isAdmin && (
               <button

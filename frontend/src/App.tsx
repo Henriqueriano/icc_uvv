@@ -88,7 +88,7 @@ export function App() {
             <Route path="/" element={<MainView darkMode={darkMode} language={language} />} />
             <Route
               path="/admin"
-              element={<LoginView darkMode={darkMode} language={language} isAdmin={isAdmin} onLogin={() => setIsAdmin(true)} onLogout={() => setIsAdmin(false)} />}
+              element={<LoginView darkMode={darkMode} language={language} isAdmin={isAdmin} onLogin={(token) => { localStorage.setItem("accessToken", token); setIsAdmin(true); }} onLogout={() => { localStorage.removeItem("accessToken"); setIsAdmin(false); }} />}
             />
             <Route
               path="/admin/stats"

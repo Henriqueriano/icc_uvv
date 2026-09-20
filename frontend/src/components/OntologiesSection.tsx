@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BookOpen } from "lucide-react";
 import { uiText, type Language } from "../i18n";
+import { listOntologies } from "../api";
 
 type OntologiesSectionProps = {
   darkMode: boolean;
@@ -9,7 +10,7 @@ type OntologiesSectionProps = {
 
 export function OntologiesSection({ darkMode, language }: OntologiesSectionProps) {
   const translation = uiText[language];
-  const ontologies = [
+  const fallbackOntologies = [
     {
       name: "FOAF",
       description: "Pessoas e relações sociais",
@@ -53,7 +54,17 @@ export function OntologiesSection({ darkMode, language }: OntologiesSectionProps
       terms: ["Thing", "Organization", "Event", "location"],
     },
   ];
-  const [selectedOntology, setSelectedOntology] = useState(ontologies[0]);
+  const [ontologies, setOntologies] = useState(fallbackOntologies);
+  const [selectedOntology, setSelectedOntology] = useState(fallbackOntologies[0]);
+  useEffect(() => {
+    listOntologies().then((items) => {
+      if (items.length) {
+        const mapped = items.map((item) => ({ ...item, name: item.name || item.iri, image: "/logo.svg", profile: fallbackOntologies[0].profile, documentation: item.description || "Ontologia carregada do Fuseki.", terms: [] }));
+        setOntologies(mapped);
+        setSelectedOntology(mapped[0]);
+      }
+    }).catch(() => undefined);
+  }, []);
 
   return (
     <main className="block">
