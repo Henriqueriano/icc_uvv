@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ArrowUpToLine } from "lucide-react";
 import { uiText, type Language } from "../i18n";
-import { importRdf } from "../api";
+import { importPdf, importRdf } from "../api";
 
 type AdminInsertSectionProps = {
   darkMode: boolean;
@@ -11,8 +11,28 @@ type AdminInsertSectionProps = {
 export function AdminInsertSection({ darkMode, language }: AdminInsertSectionProps) {
   const translation = uiText[language];
   const [files, setFiles] = useState<File[]>([]);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfMessage, setPdfMessage] = useState("");
+  const handlePdfImport = async () => {
+    if (!pdfFile) {
+      setPdfMessage("Selecione um arquivo PDF antes de importar.");
+      return;
+    }
+
+    setPdfLoading(true);
+    setPdfMessage("");
+    try {
+      const result = await importPdf(pdfFile, "icc_uvv");
+      setPdfMessage(`PDF processado pelo Ollama: ${result.tripleCount} triplas persistidas.`);
+    } catch (error) {
+      setPdfMessage(error instanceof Error ? error.message : "Falha no processamento do PDF.");
+    } finally {
+      setPdfLoading(false);
+    }
+  };
   const handleImport = async () => {
     if (files.length === 0) {
       setMessage("Selecione um arquivo ou uma pasta RDF antes de importar.");
@@ -68,6 +88,47 @@ export function AdminInsertSection({ darkMode, language }: AdminInsertSectionPro
         </div>
       </div>
 
+      <div className="mb-4">
+        <div className={darkMode ? "rounded-2xl bg-[#171614] p-5" : "rounded-2xl bg-[#FDFBE8] p-5"}>
+          <h3 className={darkMode ? "mb-2 text-xl font-semibold text-[#F5F1E6]" : "mb-2 text-xl font-semibold text-[#2A1F16]"}>
+            Importar PDF com Ollama
+          </h3>
+          <p className={darkMode ? "mb-4 text-sm leading-6 text-[#E8DCC2]" : "mb-4 text-sm leading-6 text-[#524332]"}>
+            O texto do PDF será extraído, convertido em RDF pelo Ollama e persistido no QLever.
+          </p>
+          <label
+            htmlFor="pdf-file"
+            className={darkMode
+              ? "mb-3 flex min-h-12 w-full cursor-pointer items-center rounded-xl border border-[#8C6E4C] bg-[#2A2724] px-4 py-3 text-sm text-[#E8DCC2] transition hover:bg-[#342F2B]"
+              : "mb-3 flex min-h-12 w-full cursor-pointer items-center rounded-xl border border-[#A57A4B] bg-[#FDFBE8] px-4 py-3 text-sm text-[#524332] transition hover:bg-[#F5EFC8]"}
+          >
+            <span className="truncate">{pdfFile?.name ?? "Selecionar arquivo PDF"}</span>
+            <input
+              id="pdf-file"
+              type="file"
+              accept="application/pdf,.pdf"
+              onChange={(event) => {
+                setPdfFile(event.target.files?.[0] ?? null);
+                setPdfMessage("");
+              }}
+              className="sr-only"
+            />
+          </label>
+          <button
+            type="button"
+            onClick={handlePdfImport}
+            disabled={pdfLoading || !pdfFile}
+            className={darkMode
+              ? "inline-flex items-center gap-2 rounded-xl border border-dashed border-[#8C6E4C] bg-[#2A2724] px-4 py-2.5 text-sm font-medium text-[#F5F1E6] transition hover:bg-[#342F2B] disabled:cursor-not-allowed disabled:opacity-50"
+              : "inline-flex items-center gap-2 rounded-xl border border-dashed border-[#A57A4B] bg-[#FDFBE8] px-4 py-2.5 text-sm font-medium text-[#2A1F16] transition hover:bg-[#F5EFC8] disabled:cursor-not-allowed disabled:opacity-50"}
+          >
+            <ArrowUpToLine size={16} />
+            {pdfLoading ? "Processando..." : "Processar e importar PDF"}
+          </button>
+          {pdfMessage && <p className="mt-3 text-sm">{pdfMessage}</p>}
+        </div>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2">
         <div className={darkMode ? "rounded-2xl bg-[#171614] p-5" : "rounded-2xl bg-[#FDFBE8] p-5"}>
           <h3 className={darkMode ? "mb-2 text-xl font-semibold text-[#F5F1E6]" : "mb-2 text-xl font-semibold text-[#2A1F16]"}>
@@ -100,11 +161,11 @@ export function AdminInsertSection({ darkMode, language }: AdminInsertSectionPro
           <button
             type="button"
             onClick={handleImport}
-            disabled={loading}
+            disabled={loading || files.length === 0}
             className={
               darkMode
-                ? "inline-flex items-center gap-2 rounded-xl border border-dashed border-[#8C6E4C] bg-[#2A2724] px-4 py-2.5 text-sm font-medium text-[#F5F1E6] transition hover:bg-[#342F2B]"
-                : "inline-flex items-center gap-2 rounded-xl border border-dashed border-[#A57A4B] bg-[#FDFBE8] px-4 py-2.5 text-sm font-medium text-[#2A1F16] transition hover:bg-[#F5EFC8]"
+                ? "inline-flex items-center gap-2 rounded-xl border border-dashed border-[#8C6E4C] bg-[#2A2724] px-4 py-2.5 text-sm font-medium text-[#F5F1E6] transition hover:bg-[#342F2B] disabled:cursor-not-allowed disabled:opacity-50"
+                : "inline-flex items-center gap-2 rounded-xl border border-dashed border-[#A57A4B] bg-[#FDFBE8] px-4 py-2.5 text-sm font-medium text-[#2A1F16] transition hover:bg-[#F5EFC8] disabled:cursor-not-allowed disabled:opacity-50"
             }
           >
             <ArrowUpToLine size={16} />

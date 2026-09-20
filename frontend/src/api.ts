@@ -87,3 +87,13 @@ export function importRdf(file: File, graphName: string, format?: string) {
     body,
   });
 }
+
+export function importPdf(file: File, graphName: string) {
+  const body = new FormData();
+  body.append("file", file);
+  body.append("graphName", graphName);
+  return request<{ status: string; graphName: string; tripleCount: number; format: string }>("/pdf/import", {
+    method: "POST",
+    body,
+  });
+}
