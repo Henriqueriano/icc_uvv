@@ -1,9 +1,12 @@
 using backend.Contracts.Auth;
+using backend.Data;
 using backend.Options;
 using backend.Services.Auditing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -18,10 +21,16 @@ namespace backend.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly AuthOptions _authOptions;
+    private readonly AppDbContext _dbContext;
     private readonly IAuditService _auditService;
+    private readonly PasswordHasher<User> _passwordHasher = new();
 
-    public AuthController(IOptions<AuthOptions> authOptions, IAuditService auditService)
+    public AuthController(
+        AppDbContext dbContext,
+        IOptions<AuthOptions> authOptions,
+        IAuditService auditService)
     {
+        _dbContext = dbContext;
         _authOptions = authOptions.Value;
         _auditService = auditService;
     }
@@ -39,10 +48,10 @@ public class AuthController : ControllerBase
             }));
         }
 
-        var isValidCredentials = string.Equals(request.Username, _authOptions.DefaultUsername, StringComparison.Ordinal)
-            && string.Equals(request.Password, _authOptions.DefaultPassword, StringComparison.Ordinal);
-
-        if (!isValidCredentials)
+        var user = await _dbContext.Users
+            .SingleOrDefaultAsync(candidate => candidate.Username == request.Username && candidate.IsActive, cancellationToken);
+        if (user is null
+            || _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password) != PasswordVerificationResult.Success)
         {
             await _auditService.AuditAsync("auth-token", "credentials", request.Username, "invalid credentials", false, cancellationToken);
             return Unauthorized();
@@ -50,10 +59,10 @@ public class AuthController : ControllerBase
 
         var claims = new[]
         {
-            new Claim(JwtRegisteredClaimNames.Sub, request.Username),
+            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new Claim(ClaimTypes.Name, request.Username),
-            new Claim(ClaimTypes.Role, "RdfAdmin")
+            new Claim(ClaimTypes.Name, user.Username),
+            new Claim(ClaimTypes.Role, user.Role)
         };
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_authOptions.JwtKey));

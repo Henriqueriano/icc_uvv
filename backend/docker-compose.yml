@@ -5,15 +5,15 @@ services:
     container_name: icc-uvv-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: appdb
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ic_uvv
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: '|T22S87nGl#l'
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d appdb"]
+      test: ["CMD-SHELL", "pg_isready -U admin -d ic_uvv"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -23,7 +23,8 @@ services:
     container_name: icc-uvv-fuseki
     restart: unless-stopped
     environment:
-      ADMIN_PASSWORD: admin
+      ADMIN_USERNAME: admin
+      ADMIN_PASSWORD: '24Op1(C]@_CU'
       FUSEKI_DATASET_1: icc_uvv
       FUSEKI_DATASET_1_RW: "true"
       FUSEKI_DATASET_1_TYPE: tdb

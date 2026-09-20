@@ -7,6 +7,9 @@ public class AuthOptions
     public const string SectionName = "Auth";
 
     [Required]
+    public string ConnectionStringName { get; set; } = "DefaultConnection";
+
+    [Required]
     public string JwtIssuer { get; set; } = "icc-uvv";
 
     [Required]

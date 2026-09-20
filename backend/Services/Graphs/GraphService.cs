@@ -1,81 +1,68 @@
 using backend.Contracts.Rdf;
 using backend.Infrastructure.Exceptions;
-using backend.Infrastructure.Qlever;
+using backend.Infrastructure.Fuseki;
 using backend.Options;
+using System.Text.Json;
 
 namespace backend.Services.Graphs;
 
 public class GraphService : IGraphService
 {
-    private readonly IQleverClient _qleverClient;
+    private readonly IFusekiClient _fusekiClient;
     private readonly RdfOptions _options;
 
-    public GraphService(IQleverClient qleverClient, RdfOptions options)
+    public GraphService(IFusekiClient fusekiClient, RdfOptions options)
     {
-        _qleverClient = qleverClient;
+        _fusekiClient = fusekiClient;
         _options = options;
     }
 
-    public Task<IReadOnlyList<GraphMetadataDto>> ListAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<GraphMetadataDto>> ListAsync(CancellationToken cancellationToken = default)
     {
-        var graphs = new List<GraphMetadataDto>
-        {
-            new()
+        var response = await _fusekiClient.ExecuteQueryAsync(
+            "SELECT ?graph (COUNT(*) AS ?triples) WHERE { GRAPH ?graph { ?s ?p ?o } } GROUP BY ?graph",
+            cancellationToken: cancellationToken);
+        using var document = JsonDocument.Parse(response);
+        return document.RootElement.GetProperty("results").GetProperty("bindings")
+            .EnumerateArray()
+            .Select(binding => new GraphMetadataDto
             {
-                Name = _options.FusekiDataset,
-                Status = "configured",
-                IsDefault = true,
-                TripleCount = 0,
-                LastUpdatedUtc = DateTimeOffset.UtcNow
-            },
-            new()
-            {
-                Name = _options.QleverIndex,
-                Status = "configured",
+                Name = binding.GetProperty("graph").GetProperty("value").GetString()!,
+                Status = "available",
                 IsDefault = false,
-                TripleCount = 0,
+                TripleCount = long.Parse(binding.GetProperty("triples").GetProperty("value").GetString()!),
                 LastUpdatedUtc = DateTimeOffset.UtcNow
-            }
-        };
-
-        return Task.FromResult<IReadOnlyList<GraphMetadataDto>>(graphs);
+            }).ToArray();
     }
 
-    public Task<GraphMetadataDto?> GetByNameAsync(string graphName, CancellationToken cancellationToken = default)
+    public async Task<GraphMetadataDto?> GetByNameAsync(string graphName, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(graphName))
         {
             throw new ArgumentException("The graph name is required.", nameof(graphName));
         }
 
-        var graph = new GraphMetadataDto
-        {
-            Name = graphName,
-            Status = "configured",
-            IsDefault = graphName == _options.FusekiDataset || graphName == _options.QleverIndex,
-            TripleCount = 0,
-            LastUpdatedUtc = DateTimeOffset.UtcNow
-        };
-
-        return Task.FromResult<GraphMetadataDto?>(graph);
+        var graphs = await ListAsync(cancellationToken);
+        return graphs.FirstOrDefault(graph => graph.Name == graphName);
     }
 
-    public Task<GraphStatisticsDto> GetStatisticsAsync(string graphName, CancellationToken cancellationToken = default)
+    public async Task<GraphStatisticsDto> GetStatisticsAsync(string graphName, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(graphName))
         {
             throw new ArgumentException("The graph name is required.", nameof(graphName));
         }
 
-        var stats = new GraphStatisticsDto
+        var graphs = await ListAsync(cancellationToken);
+        var graph = graphs.FirstOrDefault(item => item.Name == graphName)
+            ?? throw new KeyNotFoundException($"Graph '{graphName}' was not found.");
+        return new GraphStatisticsDto
         {
-            Name = graphName,
-            TripleCount = 0,
+            Name = graph.Name,
+            TripleCount = graph.TripleCount,
             QueryCount = 0,
-            LastUpdatedUtc = DateTimeOffset.UtcNow
+            LastUpdatedUtc = graph.LastUpdatedUtc
         };
-
-        return Task.FromResult(stats);
     }
 
     public async Task<GraphContentResult> GetContentAsync(string graphName, string? format = null, CancellationToken cancellationToken = default)
@@ -90,7 +77,7 @@ public class GraphService : IGraphService
 
         try
         {
-            var content = await _qleverClient.ExecuteQueryAsync(query, graphName, cancellationToken);
+            var content = await _fusekiClient.ExecuteQueryAsync(query, graphName, cancellationToken);
             return new GraphContentResult
             {
                 Name = graphName,
