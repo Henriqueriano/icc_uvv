@@ -40,7 +40,7 @@ O arquivo `backend/docker-compose.yml` disponibiliza:
 - porta local `5432`.
 
 A conexão da aplicação está definida em `ConnectionStrings:DefaultConnection`
-nos arquivos `appsettings.json` e `appsettings.Development.json`.
+por variável de ambiente. O arquivo `.env.example` documenta essa variável.
 
 ## Integração com Fuseki
 
@@ -59,19 +59,32 @@ O cliente `FusekiClient`:
 
 As credenciais usadas pela aplicação ficam em:
 
-```json
-{
-  "Rdf": {
-    "FusekiBaseUrl": "http://localhost:3030",
-    "FusekiDataset": "icc_uvv",
-    "FusekiUsername": "admin",
-    "FusekiPassword": "..."
-  }
-}
+```dotenv
+Rdf__FusekiBaseUrl=http://localhost:3030
+Rdf__FusekiDataset=icc_uvv
+Rdf__FusekiUsername=admin
+Rdf__FusekiPassword=...
 ```
 
 Em produção, esses valores devem ser substituídos por secrets ou variáveis de
 ambiente. Não se deve reutilizar as credenciais de desenvolvimento.
+
+## Variáveis de ambiente
+
+O backend carrega o arquivo `.env` local com `DotNetEnv` e também aceita as
+variáveis padrão do ASP.NET Core. Os nomes usam `__` para representar seções
+de configuração, por exemplo:
+
+```dotenv
+ConnectionStrings__DefaultConnection=Host=localhost;Port=5432;Database=ic_uvv;Username=admin;Password=...
+Auth__JwtKey=...
+Auth__DefaultUsername=rdf-admin
+Auth__DefaultPassword=...
+Frontend__Url=http://localhost:4040
+```
+
+O Compose usa o mesmo `.env` para configurar PostgreSQL e Fuseki. Arquivos
+`.env` são ignorados pelo Git; somente `.env.example` deve ser versionado.
 
 ## Serviços RDF conectados ao Fuseki
 

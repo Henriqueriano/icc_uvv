@@ -1,12 +1,12 @@
 import { describe, expect, test } from "bun:test";
 
 const enabled = process.env.RUN_BACKEND_INTEGRATION === "true";
-const baseUrl = process.env.BACKEND_URL ?? "http://localhost:5079";
-const username = process.env.AUTH_USERNAME ?? "rdf-admin";
-const password = process.env.AUTH_PASSWORD ?? "ChangeMe123!";
+const baseUrl = process.env.BACKEND_URL ?? "";
+const username = process.env.AUTH_USERNAME ?? "";
+const password = process.env.AUTH_PASSWORD ?? "";
 
 let backendAvailable = false;
-if (enabled) {
+if (enabled && baseUrl && username && password) {
   try {
     backendAvailable = (await fetch(`${baseUrl}/health/live`)).ok;
   } catch {

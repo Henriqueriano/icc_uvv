@@ -2,32 +2,30 @@ import { serve } from "bun";
 import index from "./index.html";
 
 const server = serve({
-  port: '4040',
+  port: Number(process.env.FRONTEND_PORT ?? 4040),
   routes: {
-    // Serve index.html for all unmatched routes.
-    "/*": index,
+    "/api/*": async request => {
+      const backendUrl = process.env.BACKEND_URL;
+      if (!backendUrl) {
+        return Response.json({ error: "BACKEND_URL is required." }, { status: 500 });
+      }
 
-    "/api/hello": {
-      async GET(req) {
-        return Response.json({
-          message: "Hello, world!",
-          method: "GET",
-        });
-      },
-      async PUT(req) {
-        return Response.json({
-          message: "Hello, world!",
-          method: "PUT",
-        });
-      },
-    },
+      const target = new URL(request.url);
+      const upstreamUrl = `${backendUrl.replace(/\/$/, "")}${target.pathname}${target.search}`;
+      const headers = new Headers(request.headers);
+      headers.delete("host");
 
-    "/api/hello/:name": async req => {
-      const name = req.params.name;
-      return Response.json({
-        message: `Hello, ${name}!`,
+      const body = request.method === "GET" || request.method === "HEAD"
+        ? undefined
+        : await request.arrayBuffer();
+
+      return fetch(upstreamUrl, {
+        method: request.method,
+        headers,
+        body,
       });
     },
+    "/*": index,
   },
 
   development: process.env.NODE_ENV !== "production" && {

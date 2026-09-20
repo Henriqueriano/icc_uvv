@@ -21,13 +21,19 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.EntityFrameworkCore;
 
+var environmentFile = FindEnvironmentFile(Directory.GetCurrentDirectory());
+if (environmentFile is not null)
+{
+    DotNetEnv.Env.Load(environmentFile);
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", policy =>
-        policy.WithOrigins("http://localhost:4040", "http://127.0.0.1:4040")
+        policy.WithOrigins(builder.Configuration["Frontend:Url"] ?? throw new InvalidOperationException("Frontend:Url is required."))
             .AllowAnyHeader()
             .AllowAnyMethod());
 });
@@ -58,7 +64,8 @@ builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<RdfOptions>>(
 builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<AuthOptions>>().Value);
 builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<SecurityOptions>>().Value);
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString(authOptions.ConnectionStringName)));
+    options.UseNpgsql(builder.Configuration.GetConnectionString(authOptions.ConnectionStringName)
+        ?? throw new InvalidOperationException("DefaultConnection is required.")));
 
 builder.Services.AddHttpClient<IFusekiClient, FusekiClient>((sp, client) =>
 {
@@ -180,3 +187,20 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+static string? FindEnvironmentFile(string startDirectory)
+{
+    var directory = new DirectoryInfo(startDirectory);
+    while (directory is not null)
+    {
+        var candidate = Path.Combine(directory.FullName, ".env");
+        if (File.Exists(candidate))
+        {
+            return candidate;
+        }
+
+        directory = directory.Parent;
+    }
+
+    return null;
+}

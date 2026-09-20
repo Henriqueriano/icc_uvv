@@ -1,12 +1,14 @@
-@backend_HostAddress = http://localhost:5079
+@backend_HostAddress = {{$dotenv BACKEND_URL}}
+@auth_username = {{$dotenv AUTH_USERNAME}}
+@auth_password = {{$dotenv AUTH_PASSWORD}}
 
 ### Emitir token JWT
 POST {{backend_HostAddress}}/api/v1/auth/token
 Content-Type: application/json
 
 {
-  "username": "rdf-admin",
-  "password": "ChangeMe123!"
+  "username": "{{auth_username}}",
+  "password": "{{auth_password}}"
 }
 
 ### Validar RDF

@@ -6,14 +6,15 @@ O frontend React executado pelo Bun consome a API ASP.NET Core por HTTP. As
 chamadas estão centralizadas em `frontend/src/api.ts`, evitando URLs,
 headers e tratamento de erros duplicados nos componentes.
 
-Por padrão, o frontend usa:
+O endereço da API é definido por `FRONTEND_API_URL` no arquivo
+`frontend/.env`. O exemplo local usa:
 
 ```text
 http://localhost:5079/api/v1
 ```
 
-O servidor Bun do frontend usa a porta `4040`. O backend aceita requisições
-CORS dessa origem durante o desenvolvimento:
+O servidor Bun do frontend usa a porta definida no ambiente. O backend aceita
+requisições CORS da origem definida por `Frontend__Url`.
 
 ```text
 http://localhost:4040
@@ -96,8 +97,10 @@ docker compose -f backend/docker-compose.yml up -d
 
 ## Limitações conhecidas
 
-- A URL da API está definida em `frontend/src/api.ts`; para outro ambiente,
-  esse valor precisa ser alterado ou extraído para configuração de build.
+- URLs, credenciais e parâmetros de ambiente ficam em `.env`; use
+  `.env.example` como referência e não versione arquivos `.env`.
+- Para outro ambiente, altere `FRONTEND_API_URL` em `frontend/.env` sem
+  modificar o código.
 - A rota de importação atualmente valida o arquivo e registra a operação,
   mas a persistência definitiva no Fuseki ainda deve ser concluída.
 - Algumas métricas de estatísticas não possuem fonte histórica persistida e
