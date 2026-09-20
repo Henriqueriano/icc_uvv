@@ -1,6 +1,7 @@
 using System.Text;
 using System.Threading.RateLimiting;
 using backend.Infrastructure.Health;
+using backend.Infrastructure.Ollama;
 using backend.Infrastructure.Qlever;
 using backend.Infrastructure.Security;
 using backend.Data;
@@ -54,15 +55,23 @@ builder.Services.AddOptions<SecurityOptions>()
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
+builder.Services.AddOptions<OllamaOptions>()
+    .BindConfiguration(OllamaOptions.SectionName)
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
 var rdfOptions = builder.Configuration.GetSection(RdfOptions.SectionName).Get<RdfOptions>() ?? new RdfOptions();
 var authOptions = builder.Configuration.GetSection(AuthOptions.SectionName).Get<AuthOptions>() ?? new AuthOptions();
 var securityOptions = builder.Configuration.GetSection(SecurityOptions.SectionName).Get<SecurityOptions>() ?? new SecurityOptions();
+var ollamaOptions = builder.Configuration.GetSection(OllamaOptions.SectionName).Get<OllamaOptions>() ?? new OllamaOptions();
 
 SecurityUrlValidator.ValidateConfiguredUrl(rdfOptions.QleverBaseUrl, nameof(RdfOptions.QleverBaseUrl), securityOptions);
+SecurityUrlValidator.ValidateConfiguredUrl(ollamaOptions.BaseUrl, nameof(OllamaOptions.BaseUrl), securityOptions);
 
 builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<RdfOptions>>().Value);
 builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<AuthOptions>>().Value);
 builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<SecurityOptions>>().Value);
+builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<OllamaOptions>>().Value);
 builder.Services.AddSingleton<PasswordHashService>();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString(authOptions.ConnectionStringName)
@@ -73,6 +82,13 @@ builder.Services.AddHttpClient<IQleverClient, QleverClient>((sp, client) =>
     var options = sp.GetRequiredService<RdfOptions>();
     client.BaseAddress = new Uri(options.QleverBaseUrl);
     client.Timeout = TimeSpan.FromSeconds(options.QueryTimeoutSeconds);
+});
+
+builder.Services.AddHttpClient<IOllamaClient, OllamaClient>((sp, client) =>
+{
+    var options = sp.GetRequiredService<OllamaOptions>();
+    client.BaseAddress = new Uri(options.BaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
 });
 
 builder.Services.AddScoped<IRdfService, RdfService>();

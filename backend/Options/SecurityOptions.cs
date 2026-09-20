@@ -17,5 +17,5 @@ public class SecurityOptions
 
     public bool AllowLoopbackUrls { get; set; } = false;
 
-    public string[] AllowedHosts { get; set; } = ["qlever"];
+    public string[] AllowedHosts { get; set; } = ["qlever", "ollama"];
 }
