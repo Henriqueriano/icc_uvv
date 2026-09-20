@@ -26,7 +26,7 @@ export function MainView({ darkMode, language }: MainViewProps) {
   const labelClass = darkMode ? "text-[11px] uppercase tracking-[0.08em] text-[#E8DCC2]" : "text-[11px] uppercase tracking-[0.08em] text-[#5B4A35]";
 
   return (
-    <div className="flex min-h-[calc(100vh-64px)] items-center justify-center px-3 py-6">
+    <div className="flex min-h-[calc(100vh-64px)] items-start justify-center px-3 py-6">
       <div className={shellClass}>
         <nav className={navClass}>
           <div className="flex w-full flex-col gap-2 md:max-w-[420px]">

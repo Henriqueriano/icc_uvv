@@ -1,8 +1,9 @@
 import { useState, type FormEvent } from "react";
 import { uiText, type Language } from "../i18n";
-import { ArrowRight } from "lucide-react";
+import { Search } from "lucide-react";
 import { SearchTabs } from "./SearchTabs";
 import { executeSparql, search } from "../api";
+import { RdfGraph } from "./RdfGraph";
 
 type SearchSectionProps = {
   searchView: "free" | "sparql";
@@ -13,6 +14,7 @@ type SearchSectionProps = {
 
 export function SearchSection({ searchView, onSearchViewChange, darkMode, language }: SearchSectionProps) {
   const [searchResult, setSearchResult] = useState("");
+  const [resultData, setResultData] = useState<unknown>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const translation = uiText[language];
@@ -49,6 +51,7 @@ export function SearchSection({ searchView, onSearchViewChange, darkMode, langua
     setError("");
     try {
       const result = searchView === "free" ? await search(query) : await executeSparql(query);
+      setResultData(result);
       setSearchResult(JSON.stringify(result, null, 2));
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Falha ao consultar a API.");
@@ -71,7 +74,7 @@ export function SearchSection({ searchView, onSearchViewChange, darkMode, langua
               <form onSubmit={handleSearchSubmit} className="flex w-full max-w-[900px] flex-1 items-center justify-center gap-3">
                 <textarea id="free-search" name="query" placeholder={translation.freeSearchInput} className={inputClass} />
                 <button type="submit" className={submitClass} aria-label={translation.freeSearch}>
-                  {loading ? "..." : <ArrowRight size={22} aria-hidden="true" />}
+                  {loading ? "..." : <Search size={22} aria-hidden="true" />}
                 </button>
               </form>
             </div>
@@ -86,7 +89,7 @@ export function SearchSection({ searchView, onSearchViewChange, darkMode, langua
                   className={inputClass}
                 />
                 <button type="submit" className={submitClass} aria-label={translation.sparql}>
-                  {loading ? "..." : <ArrowRight size={22} aria-hidden="true" />}
+                  {loading ? "..." : <Search size={22} aria-hidden="true" />}
                 </button>
               </form>
             </div>
@@ -96,7 +99,7 @@ export function SearchSection({ searchView, onSearchViewChange, darkMode, langua
 
       <div className={lowerSectionClass}>
         <h3 className={darkMode ? "mb-2 text-xl font-semibold text-[#F5F1E6]" : "mb-2 text-xl font-semibold text-[#2A1F16]"}>{translation.lowerSection}</h3>
-        {error ? <p className="whitespace-pre-wrap text-sm text-red-700">{error}</p> : searchResult ? <pre className="max-h-96 overflow-auto whitespace-pre-wrap text-sm">{searchResult}</pre> : <p className={secondaryTextClass}>{translation.lowerSectionText}</p>}
+        {error ? <p className="whitespace-pre-wrap text-sm text-red-700">{error}</p> : searchResult ? <><RdfGraph result={resultData} darkMode={darkMode} /><div className={darkMode ? "rounded-xl border border-[#453F39] bg-[#1F1D1A] p-4" : "rounded-xl border border-[#E7DDB3] bg-[#FDFBE8] p-4"}><pre className="max-h-96 overflow-auto whitespace-pre-wrap text-sm">{searchResult}</pre></div></> : <p className={secondaryTextClass}>{translation.lowerSectionText}</p>}
       </div>
     </>
   );

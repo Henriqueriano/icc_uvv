@@ -83,7 +83,7 @@ export function App() {
           </button>
         </div>
 
-        <div className="h-[calc(100vh-64px)] overflow-hidden">
+        <div className="min-h-[calc(100vh-64px)] overflow-y-auto">
           <Routes>
             <Route path="/" element={<MainView darkMode={darkMode} language={language} />} />
             <Route
