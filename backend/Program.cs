@@ -1,4 +1,7 @@
+using backend.Infrastructure.Fuseki;
+using backend.Infrastructure.Qlever;
 using backend.Options;
+using backend.Services.Rdf;
 using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,6 +16,10 @@ builder.Services.AddOptions<RdfOptions>()
 
 builder.Services.AddSingleton(sp =>
     sp.GetRequiredService<IOptions<RdfOptions>>().Value);
+
+builder.Services.AddHttpClient<IFusekiClient, FusekiClient>();
+builder.Services.AddHttpClient<IQleverClient, QleverClient>();
+builder.Services.AddScoped<IRdfService, RdfService>();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
