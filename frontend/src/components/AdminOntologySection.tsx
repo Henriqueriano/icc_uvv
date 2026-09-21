@@ -78,7 +78,7 @@ export function AdminOntologySection({ darkMode }: Props) {
     };
     try {
       if (editingId) {
-        const updated = await updateOntology(editingId, payload) as OntologyAdmin;
+        const updated = await updateOntology(editingId, payload) as AdminOntology;
         setForm({
           name: updated.name,
           iri: updated.iri,

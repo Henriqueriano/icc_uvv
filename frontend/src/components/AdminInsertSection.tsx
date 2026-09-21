@@ -167,7 +167,7 @@ export function AdminInsertSection({ darkMode, language }: AdminInsertSectionPro
                 : "mb-3 flex min-h-12 w-full cursor-pointer items-center rounded-xl border border-[#A57A4B] bg-[#FDFBE8] px-4 py-3 text-sm text-[#524332] transition hover:bg-[#F5EFC8]"
             } ${lockedLabelClass}`}
           >
-            <span className="truncate">{files.length === 1 ? files[0].name : files.length > 1 ? `${files.length} arquivos selecionados` : "Selecionar arquivo RDF"}</span>
+            <span className="truncate">{files.length === 1 ? files[0]?.name : files.length > 1 ? `${files.length} arquivos selecionados` : "Selecionar arquivo RDF"}</span>
             <input
               id="rdf-file"
               type="file"

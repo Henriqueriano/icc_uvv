@@ -54,10 +54,12 @@ public class OntologyAdminController(AppDbContext dbContext) : ControllerBase
         Validate(request);
         var ontology = await Load(id, cancellationToken);
         if (ontology is null) return NotFound();
-        if (await dbContext.Ontologies.AnyAsync(item => item.Id != id && item.Iri == request.Iri.Trim(), cancellationToken))
+        var iri = string.IsNullOrWhiteSpace(request.Iri) ? ontology.Iri : request.Iri.Trim();
+        if (await dbContext.Ontologies.AnyAsync(item => item.Id != id && item.Iri == iri, cancellationToken))
             return Conflict("Já existe uma ontologia com este IRI.");
 
         ontology.Name = request.Name.Trim();
+        ontology.Iri = iri;
         ontology.Description = request.Description.Trim();
         ontology.Documentation = request.Documentation.Trim();
         ontology.Terms = string.Join('\n', request.Terms.Where(item => !string.IsNullOrWhiteSpace(item)).Select(item => item.Trim()).Distinct());

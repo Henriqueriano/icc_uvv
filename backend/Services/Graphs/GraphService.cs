@@ -67,27 +67,36 @@ public class GraphService : IGraphService
 
     public async Task<GraphContentResult> GetContentAsync(string graphName, string? format = null, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(graphName))
-        {
-            throw new ArgumentException("The graph name is required.", nameof(graphName));
-        }
+        var normalizedGraphName = NormalizeGraphName(graphName);
 
         var normalizedFormat = (format ?? "text/turtle").Trim();
-        var query = $@"CONSTRUCT {{ ?s ?p ?o }} WHERE {{ GRAPH <{graphName}> {{ ?s ?p ?o }} }} LIMIT 20";
+        var query = $@"CONSTRUCT {{ ?s ?p ?o }} WHERE {{ GRAPH <{normalizedGraphName}> {{ ?s ?p ?o }} }} LIMIT 20";
 
         try
         {
-            var content = await _qleverClient.ExecuteQueryAsync(query, graphName, cancellationToken);
+            var content = await _qleverClient.ExecuteQueryAsync(query, normalizedGraphName, cancellationToken);
             return new GraphContentResult
             {
-                Name = graphName,
+                Name = normalizedGraphName,
                 Format = normalizedFormat,
                 Content = content
             };
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is DependencyUnavailableException or TimeoutException or SparqlException)
         {
-            throw new DependencyUnavailableException($"Unable to retrieve graph content for '{graphName}'.", ex);
+            throw new DependencyUnavailableException($"Unable to retrieve graph content for '{normalizedGraphName}'.", ex);
         }
+    }
+
+    private static string NormalizeGraphName(string graphName)
+    {
+        if (string.IsNullOrWhiteSpace(graphName)
+            || !Uri.TryCreate(graphName.Trim(), UriKind.Absolute, out var uri)
+            || string.IsNullOrWhiteSpace(uri.Scheme))
+        {
+            throw new ArgumentException("The graph name must be an absolute URI.", nameof(graphName));
+        }
+
+        return uri.AbsoluteUri;
     }
 }

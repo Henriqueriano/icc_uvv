@@ -68,21 +68,26 @@ export function bindingToTriple(binding: QueryBinding) {
   const directionEntry = findVariable(entries, "direction");
   const direction = directionEntry?.[1]?.toLowerCase();
   const graphEntries = entries.filter(([name]) => name !== directionEntry?.[0]);
-  const predicate = findVariable(graphEntries, "predicate") ?? graphEntries[1];
+  const predicateEntry = findVariable(graphEntries, "predicate") ?? graphEntries[1];
+  if (!predicateEntry) return null;
+  const predicate = predicateEntry[1];
   const subject = findVariable(entries, "subject");
   const object = findVariable(entries, "object");
 
   if (subject && object && subject[0] !== object[0]) {
     return direction === "entrada"
-      ? { subject: object[1], predicate: predicate[1], object: subject[1] }
-      : { subject: subject[1], predicate: predicate[1], object: object[1] };
+      ? { subject: object[1], predicate, object: subject[1] }
+      : { subject: subject[1], predicate, object: object[1] };
   }
 
-  const endpoints = graphEntries.filter(([name]) => name !== predicate[0]);
+  const endpoints = graphEntries.filter(([name]) => name !== predicateEntry[0]);
   if (endpoints.length < 2) return null;
+  const firstEndpoint = endpoints[0];
+  const secondEndpoint = endpoints[1];
+  if (!firstEndpoint || !secondEndpoint) return null;
   return direction === "entrada"
-    ? { subject: endpoints[1][1], predicate: predicate[1], object: endpoints[0][1] }
-    : { subject: endpoints[0][1], predicate: predicate[1], object: endpoints[1][1] };
+    ? { subject: secondEndpoint[1], predicate, object: firstEndpoint[1] }
+    : { subject: firstEndpoint[1], predicate, object: secondEndpoint[1] };
 }
 
 export function extractTriples(result: unknown) {
@@ -154,7 +159,9 @@ export function RdfGraph({ result, darkMode }: RdfGraphProps) {
       node.attr("transform", (d) => `translate(${d.x ?? 0},${d.y ?? 0})`);
     });
 
-    return () => simulation.stop();
+    return () => {
+      simulation.stop();
+    };
   }, [darkMode, triples]);
 
   if (triples.length === 0) return null;

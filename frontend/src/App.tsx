@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type JSX } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { ToggleLeft, ToggleRight } from "lucide-react";
 import "./index.css";
