@@ -125,7 +125,8 @@ export function RdfGraph({ result, darkMode }: RdfGraphProps) {
     svg.call(
       d3.zoom<SVGSVGElement, unknown>()
         .scaleExtent([0.35, 3])
-        .translateExtent([[-width, -height], [width * 2, height * 2]])
+        .translateExtent([[-width * 3, -height * 3], [width * 4, height * 4]])
+        .filter((event) => event.type === "wheel" || event.type === "mousedown" || event.type === "touchstart")
         .on("zoom", (event) => graphLayer.attr("transform", event.transform)),
     );
 
@@ -140,23 +141,7 @@ export function RdfGraph({ result, darkMode }: RdfGraphProps) {
       .attr("font-size", 9)
       .attr("fill", darkMode ? "#E8DCC2" : "#524332")
       .text((d) => d.predicate);
-    const node = graphLayer.append("g").selectAll("g").data(nodes).join("g").call(
-      d3.drag<SVGGElement, GraphNode>()
-        .on("start", (event, d) => {
-          if (!event.active) simulation.alphaTarget(0.3).restart();
-          d.fx = d.x;
-          d.fy = d.y;
-        })
-        .on("drag", (event, d) => {
-          d.fx = event.x;
-          d.fy = event.y;
-        })
-        .on("end", (event, d) => {
-          if (!event.active) simulation.alphaTarget(0);
-          d.fx = null;
-          d.fy = null;
-        }),
-    );
+    const node = graphLayer.append("g").selectAll("g").data(nodes).join("g");
     node.append("circle").attr("r", 20).attr("fill", darkMode ? "#4A3B32" : "#E7D89B").attr("stroke", darkMode ? "#D1B866" : "#A57A4B");
     node.append("title").text((d) => d.id);
     node.append("text").attr("text-anchor", "middle").attr("dy", 4).attr("font-size", 9).attr("fill", darkMode ? "#F5F1E6" : "#2A1F16").text((d) => d.label);

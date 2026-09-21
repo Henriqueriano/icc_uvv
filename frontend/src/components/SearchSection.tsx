@@ -59,12 +59,12 @@ export function SearchSection({ searchView, onSearchViewChange, darkMode, langua
       return;
     }
     setLoading(true);
-    setError("");
-    setOllamaResponse("");
     try {
       const result = searchView === "free" ? await search(query) : await executeSparql(query);
       setResultData(result);
       setSearchResult(JSON.stringify(result, null, 2));
+      setError("");
+      setOllamaResponse("");
       if (searchView === "free" && typeof result === "object" && result !== null && "ollamaResponse" in result) {
         setOllamaResponse(String(result.ollamaResponse));
       }

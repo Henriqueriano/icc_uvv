@@ -11,7 +11,7 @@ export const uiText = {
     sparql: "SPARQL",
     freeSearchInput: "Digite sua busca",
     sparqlInput: "Digite sua consulta SPARQL",
-    graphResult: "Resultado do grafo",
+    graphResult: "Grafo resultante",
     ollamaQuery: "Consulta gerada pelo Ollama",
     jsonResponse: "Resposta em JSON",
     lowerSection: "Seção inferior",

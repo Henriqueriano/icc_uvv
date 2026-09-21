@@ -102,7 +102,7 @@ export function login(username: string, password: string) {
 export function search(text: string, graph?: string) {
   return request<Record<string, unknown>>("/search", {
     method: "POST",
-    body: JSON.stringify({ text, graph, page: 1, pageSize: 20 }),
+    body: JSON.stringify({ text, graph }),
   });
 }
 

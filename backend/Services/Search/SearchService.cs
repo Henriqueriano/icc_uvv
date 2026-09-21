@@ -14,7 +14,10 @@ public class SearchService : ISearchService
     private readonly IOllamaClient _ollamaClient;
     private readonly IOperationalMetricsService _metricsService;
 
-    public SearchService(IQleverClient qleverClient, IOllamaClient ollamaClient, IOperationalMetricsService? metricsService = null)
+    public SearchService(
+        IQleverClient qleverClient,
+        IOllamaClient ollamaClient,
+        IOperationalMetricsService? metricsService = null)
     {
         _qleverClient = qleverClient;
         _ollamaClient = ollamaClient;
@@ -48,7 +51,7 @@ public class SearchService : ISearchService
             {
                 try
                 {
-                    query = await GenerateQueryAsync(request.Text.Trim(), request.PageSize, qleverError, cancellationToken);
+                    query = await GenerateQueryAsync(request.Text.Trim(), qleverError, cancellationToken);
                     var qleverResponse = await _qleverClient.ExecuteQueryAsync(query, request.Graph, cancellationToken);
                     success = true;
                     return AddGeneratedQuery(qleverResponse, query);
@@ -94,16 +97,18 @@ public class SearchService : ISearchService
 
     private async Task<string> GenerateQueryAsync(
         string text,
-        int pageSize,
         string? qleverError,
         CancellationToken cancellationToken)
     {
         var prompt = $"""
             Convert the user's request into one read-only SPARQL 1.1 query for an RDF knowledge graph.
+            Interpret the user's request semantically and return the SPARQL query that best answers it.
             Return only the SPARQL query, without Markdown fences or explanations.
             The query must use variables named ?subject, ?predicate, and ?object when returning triples.
             Never generate INSERT, DELETE, LOAD, CLEAR, DROP, CREATE, or other updates.
-            Always include LIMIT {pageSize} unless the query is an aggregate.
+            If the user explicitly requests a result limit, include the requested LIMIT value in the SPARQL query.
+            If the user explicitly requests pagination or an offset, include the requested OFFSET and LIMIT values.
+            If the user does not request a limit, do not add LIMIT, OFFSET, pagination, or any other row limit.
             User request: {text}
             """;
         if (!string.IsNullOrWhiteSpace(qleverError))
