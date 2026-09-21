@@ -18,6 +18,49 @@ export class ApiError extends Error {
   }
 }
 
+function stripHtml(value: string) {
+  return value
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, "\"")
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function getErrorMessage(body: string, status: number) {
+  try {
+    const problem = JSON.parse(body) as {
+      detail?: unknown;
+      message?: unknown;
+      title?: unknown;
+      errors?: Record<string, unknown>;
+    };
+    const detail = [problem.detail, problem.message, problem.title]
+      .find((value): value is string => typeof value === "string" && value.trim().length > 0);
+    if (detail) return detail.trim();
+    if (problem.errors) {
+      const validationErrors = Object.values(problem.errors)
+        .flatMap((value) => Array.isArray(value) ? value : [value])
+        .filter((value): value is string => typeof value === "string")
+        .join(" ");
+      if (validationErrors) return validationErrors;
+    }
+  } catch {
+    // Some reverse proxies return an HTML error page instead of ProblemDetails.
+  }
+
+  const text = /<html[\s>]/i.test(body) || /<\/?[a-z][^>]*>/i.test(body)
+    ? stripHtml(body)
+    : body.trim();
+  return text || (status === 401 ? "Sessão expirada. Faça login novamente." : `Erro ${status} ao consultar a API.`);
+}
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem("accessToken");
   const headers = new Headers(options.headers);
@@ -35,15 +78,16 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
       localStorage.removeItem("isAdmin");
     }
     const body = await response.text();
+    let ollamaResponse: string | undefined;
     try {
-      const problem = JSON.parse(body) as { detail?: string; ollamaResponse?: string };
-      throw new ApiError(problem.detail || "Sessão expirada. Faça login novamente.", response.status, problem.ollamaResponse);
-    } catch (error) {
-      if (error instanceof ApiError) {
-        throw error;
+      const problem = JSON.parse(body) as { ollamaResponse?: unknown };
+      if (typeof problem.ollamaResponse === "string") {
+        ollamaResponse = problem.ollamaResponse;
       }
-      throw new ApiError(body || `Erro ${response.status}`, response.status);
+    } catch {
+      // The user-facing message is extracted below from text or HTML responses.
     }
+    throw new ApiError(getErrorMessage(body, response.status), response.status, ollamaResponse);
   }
   return response.status === 204 ? (undefined as T) : response.json();
 }
@@ -70,7 +114,51 @@ export function executeSparql(query: string) {
 }
 
 export function listOntologies() {
-  return request<Array<{ iri: string; name: string; description: string; namespace: string; classCount: number; propertyCount: number }>>("/ontologies");
+  return request<Array<{
+    iri: string;
+    name: string;
+    description: string;
+    namespace: string;
+    classCount: number;
+    propertyCount: number;
+    authors: Array<{ authorName: string; portfolioUrl: string }>;
+    baseDocuments: Array<{ link: string; description: string }>;
+    documentation: string;
+    profileArea: string;
+    profileResume: string;
+    profileSource: string;
+    terms: string[];
+  }>>("/ontologies");
+}
+
+export type OntologyAdminPayload = {
+  name: string;
+  iri: string;
+  description: string;
+  documentation: string;
+  profileArea: string;
+  profileResume: string;
+  profileSource: string;
+  sourceDocument: string;
+  terms: string[];
+  authors: Array<{ authorName: string; portfolioUrl: string }>;
+  baseDocuments: Array<{ link: string; description: string }>;
+};
+
+export function listAdminOntologies() {
+  return request<Array<OntologyAdminPayload & { id?: string; authors: Array<{ authorName: string; portfolioUrl: string }> }>>("/admin/ontologies");
+}
+
+export function createOntology(payload: OntologyAdminPayload) {
+  return request("/admin/ontologies", { method: "POST", body: JSON.stringify(payload) });
+}
+
+export function updateOntology(id: string, payload: OntologyAdminPayload) {
+  return request(`/admin/ontologies/${id}`, { method: "PUT", body: JSON.stringify(payload) });
+}
+
+export function deleteOntology(id: string) {
+  return request<void>(`/admin/ontologies/${id}`, { method: "DELETE" });
 }
 
 export type ComponentStatus = {

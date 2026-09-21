@@ -12,6 +12,7 @@ public static class DatabaseInitializer
         await using var scope = services.CreateAsyncScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         await dbContext.Database.MigrateAsync(cancellationToken);
+        await OntologySampleSeeder.SeedAsync(dbContext, cancellationToken);
 
         if (await dbContext.Users.AnyAsync(cancellationToken))
         {
@@ -40,6 +41,7 @@ public static class DatabaseInitializer
         var passwordHashService = scope.ServiceProvider.GetRequiredService<PasswordHashService>();
 
         await dbContext.Database.MigrateAsync(cancellationToken);
+        await OntologySampleSeeder.SeedAsync(dbContext, cancellationToken);
 
         var user = await dbContext.Users
             .SingleOrDefaultAsync(candidate => candidate.Username == authOptions.DefaultUsername, cancellationToken);
@@ -68,4 +70,5 @@ public static class DatabaseInitializer
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
+
 }

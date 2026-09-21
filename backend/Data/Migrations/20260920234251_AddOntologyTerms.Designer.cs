@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using backend.Data;
@@ -11,9 +12,11 @@ using backend.Data;
 namespace backend.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260920234251_AddOntologyTerms")]
+    partial class AddOntologyTerms
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -55,22 +58,6 @@ namespace backend.Data.Migrations
                         .HasColumnType("character varying(250)")
                         .HasColumnName("name");
 
-                    b.Property<string>("ProfileArea")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("ProfileName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("ProfileResume")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("ProfileSource")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<string>("SourceDocument")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -90,7 +77,7 @@ namespace backend.Data.Migrations
                     b.ToTable("ontologies", (string)null);
                 });
 
-            modelBuilder.Entity("backend.Data.OntologyAuthorPortfolio", b =>
+            modelBuilder.Entity("backend.Data.OntologyAuthorImage", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -103,22 +90,21 @@ namespace backend.Data.Migrations
                         .HasColumnType("character varying(250)")
                         .HasColumnName("author_name");
 
+                    b.Property<string>("ImageUrl")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("image_url");
+
                     b.Property<Guid>("OntologyId")
                         .HasColumnType("uuid")
                         .HasColumnName("ontology_id");
-
-                    b.Property<string>("PortfolioUrl")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)")
-                        .HasColumnName("portfolio_url");
 
                     b.HasKey("Id");
 
                     b.HasIndex("OntologyId", "AuthorName")
                         .IsUnique();
 
-                    b.ToTable("ontology_author_portfolios", (string)null);
+                    b.ToTable("ontology_author_images", (string)null);
                 });
 
             modelBuilder.Entity("backend.Data.OntologyBaseDocument", b =>
@@ -192,10 +178,10 @@ namespace backend.Data.Migrations
                     b.ToTable("users", (string)null);
                 });
 
-            modelBuilder.Entity("backend.Data.OntologyAuthorPortfolio", b =>
+            modelBuilder.Entity("backend.Data.OntologyAuthorImage", b =>
                 {
                     b.HasOne("backend.Data.Ontology", "Ontology")
-                        .WithMany("AuthorPortfolios")
+                        .WithMany("AuthorImages")
                         .HasForeignKey("OntologyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -216,7 +202,7 @@ namespace backend.Data.Migrations
 
             modelBuilder.Entity("backend.Data.Ontology", b =>
                 {
-                    b.Navigation("AuthorPortfolios");
+                    b.Navigation("AuthorImages");
 
                     b.Navigation("BaseDocuments");
                 });

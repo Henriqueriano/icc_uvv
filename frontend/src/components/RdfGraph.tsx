@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import * as d3 from "d3";
 
-type BindingValue = { value?: string };
+type BindingValue = { value?: unknown; id?: unknown; type?: string };
 type QueryBinding = Record<string, BindingValue>;
 
 type RdfGraphProps = {
@@ -12,26 +12,89 @@ type RdfGraphProps = {
 type GraphNode = d3.SimulationNodeDatum & { id: string; label: string };
 type GraphLink = d3.SimulationLinkDatum<GraphNode> & { predicate: string; source: string; target: string };
 
+const roleAliases = {
+  subject: ["subject", "sujeito", "subj", "source", "origem", "from", "entity", "entidade", "catalog", "catalogo"],
+  predicate: ["predicate", "predicado", "property", "propriedade", "relation", "relacao", "relationship", "edge", "aresta"],
+  object: ["object", "objeto", "obj", "target", "destino", "to", "value", "valor", "neighbor", "vizinho", "node", "no"],
+  direction: ["direction", "direcao", "dir", "orientation", "orientacao", "sentido"],
+};
+
 function getBindings(result: unknown): QueryBinding[] {
+  if (Array.isArray(result)) return result.filter(isQueryBinding);
   if (!result || typeof result !== "object") return [];
-  const bindings = (result as { results?: { bindings?: unknown } }).results?.bindings;
+  const response = result as {
+    results?: { bindings?: unknown };
+    bindings?: unknown;
+    data?: { results?: { bindings?: unknown }; bindings?: unknown };
+  };
+  const bindings = response.results?.bindings
+    ?? response.bindings
+    ?? response.data?.results?.bindings
+    ?? response.data?.bindings;
   return Array.isArray(bindings) ? bindings.filter((item): item is QueryBinding => !!item && typeof item === "object") : [];
 }
 
-function asTriple(binding: QueryBinding) {
-  const subject = binding.subject?.value;
-  const predicate = binding.predicate?.value;
-  const object = binding.object?.value;
-  return subject && predicate && object ? { subject, predicate, object } : null;
+function isQueryBinding(item: unknown): item is QueryBinding {
+  return !!item && typeof item === "object" && !Array.isArray(item);
+}
+
+function getBindingValue(term: BindingValue | string | undefined) {
+  if (typeof term === "string") return term;
+  if (!term || typeof term !== "object") return undefined;
+  if (typeof term.value === "string") return term.value;
+  if (typeof term.id === "string") return term.id;
+  return undefined;
+}
+
+function normalizeVariableName(name: string) {
+  return name
+    .replace(/^\?/, "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function findVariable(entries: Array<[string, string]>, role: keyof typeof roleAliases) {
+  const aliases = roleAliases[role];
+  return entries.find(([name]) => aliases.includes(normalizeVariableName(name)));
+}
+
+export function bindingToTriple(binding: QueryBinding) {
+  const entries = Object.entries(binding)
+    .map(([name, term]) => [name, getBindingValue(term)] as const)
+    .filter((entry): entry is [string, string] => Boolean(entry[1]));
+  if (entries.length < 3) return null;
+
+  const directionEntry = findVariable(entries, "direction");
+  const direction = directionEntry?.[1]?.toLowerCase();
+  const graphEntries = entries.filter(([name]) => name !== directionEntry?.[0]);
+  const predicate = findVariable(graphEntries, "predicate") ?? graphEntries[1];
+  const subject = findVariable(entries, "subject");
+  const object = findVariable(entries, "object");
+
+  if (subject && object && subject[0] !== object[0]) {
+    return direction === "entrada"
+      ? { subject: object[1], predicate: predicate[1], object: subject[1] }
+      : { subject: subject[1], predicate: predicate[1], object: object[1] };
+  }
+
+  const endpoints = graphEntries.filter(([name]) => name !== predicate[0]);
+  if (endpoints.length < 2) return null;
+  return direction === "entrada"
+    ? { subject: endpoints[1][1], predicate: predicate[1], object: endpoints[0][1] }
+    : { subject: endpoints[0][1], predicate: predicate[1], object: endpoints[1][1] };
+}
+
+export function extractTriples(result: unknown) {
+  return getBindings(result)
+    .map(bindingToTriple)
+    .filter((triple): triple is NonNullable<typeof triple> => triple !== null);
 }
 
 export function RdfGraph({ result, darkMode }: RdfGraphProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const triples = useMemo(
-    () => getBindings(result)
-      .map(asTriple)
-      .filter((triple): triple is NonNullable<typeof triple> => triple !== null)
-      .slice(0, 100),
+    () => extractTriples(result).slice(0, 100),
     [result],
   );
 

@@ -1,5 +1,7 @@
 using backend.Contracts.Ontologies;
 using backend.Infrastructure.Qlever;
+using backend.Data;
+using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 
 namespace backend.Services.Ontologies;
@@ -7,10 +9,12 @@ namespace backend.Services.Ontologies;
 public class OntologyService : IOntologyService
 {
     private readonly IQleverClient _qleverClient;
+    private readonly AppDbContext _dbContext;
 
-    public OntologyService(IQleverClient qleverClient)
+    public OntologyService(IQleverClient qleverClient, AppDbContext dbContext)
     {
         _qleverClient = qleverClient;
+        _dbContext = dbContext;
     }
 
     public Task<IReadOnlyList<OntologySummaryDto>> ListAsync(CancellationToken cancellationToken = default)
@@ -71,28 +75,37 @@ public class OntologyService : IOntologyService
 
     private async Task<IReadOnlyList<OntologySummaryDto>> LoadAsync(CancellationToken cancellationToken)
     {
-        const string query = """
-            PREFIX owl: <http://www.w3.org/2002/07/owl#>
-            PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-            SELECT ?ontology (COUNT(DISTINCT ?class) AS ?classes) (COUNT(DISTINCT ?property) AS ?properties)
-            WHERE {
-              { ?ontology a owl:Ontology }
-              OPTIONAL { ?class a owl:Class }
-              OPTIONAL { ?property a rdf:Property }
-            }
-            GROUP BY ?ontology
-            """;
-        var response = await _qleverClient.ExecuteQueryAsync(query, cancellationToken: cancellationToken);
-        using var document = JsonDocument.Parse(response);
-        return document.RootElement.GetProperty("results").GetProperty("bindings").EnumerateArray()
-            .Select(binding => new OntologySummaryDto
+        var documented = await _dbContext.Ontologies
+            .Include(ontology => ontology.AuthorPortfolios)
+            .Include(ontology => ontology.BaseDocuments)
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+        var documentedDtos = documented.Select(ontology => new OntologySummaryDto
+        {
+            Id = ontology.Id,
+            Iri = ontology.Iri,
+            Name = ontology.Name,
+            Description = ontology.Description,
+            Documentation = ontology.Documentation,
+            SourceDocument = ontology.SourceDocument,
+            ProfileArea = ontology.ProfileArea,
+            ProfileResume = ontology.ProfileResume,
+            ProfileSource = ontology.ProfileSource,
+            Namespace = ontology.Iri,
+            Terms = ontology.Terms.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
+            Authors = ontology.AuthorPortfolios.Select(author => new OntologyAuthorPortfolioDto
             {
-                Iri = binding.GetProperty("ontology").GetProperty("value").GetString()!,
-                Name = binding.GetProperty("ontology").GetProperty("value").GetString()!,
-                Namespace = binding.GetProperty("ontology").GetProperty("value").GetString()!,
-                ClassCount = int.Parse(binding.GetProperty("classes").GetProperty("value").GetString()!),
-                PropertyCount = int.Parse(binding.GetProperty("properties").GetProperty("value").GetString()!)
-            }).ToArray();
+                AuthorName = author.AuthorName,
+                PortfolioUrl = author.PortfolioUrl
+            }).ToArray(),
+            BaseDocuments = ontology.BaseDocuments.Select(document => new OntologyBaseDocumentDto
+            {
+                Link = document.Link,
+                Description = document.Description
+            }).ToArray()
+        }).ToList();
+
+        return documentedDtos;
     }
 
     private static IReadOnlyList<string> ParseValues(string response, string variable)

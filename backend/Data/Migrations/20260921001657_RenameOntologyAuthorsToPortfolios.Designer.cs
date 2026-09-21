@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using backend.Data;
@@ -11,9 +12,11 @@ using backend.Data;
 namespace backend.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260921001657_RenameOntologyAuthorsToPortfolios")]
+    partial class RenameOntologyAuthorsToPortfolios
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -54,22 +57,6 @@ namespace backend.Data.Migrations
                         .HasMaxLength(250)
                         .HasColumnType("character varying(250)")
                         .HasColumnName("name");
-
-                    b.Property<string>("ProfileArea")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("ProfileName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("ProfileResume")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("ProfileSource")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<string>("SourceDocument")
                         .IsRequired()

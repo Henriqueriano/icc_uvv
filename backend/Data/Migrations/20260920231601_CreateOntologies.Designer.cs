@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using backend.Data;
@@ -11,9 +12,11 @@ using backend.Data;
 namespace backend.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260920231601_CreateOntologies")]
+    partial class CreateOntologies
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -55,32 +58,11 @@ namespace backend.Data.Migrations
                         .HasColumnType("character varying(250)")
                         .HasColumnName("name");
 
-                    b.Property<string>("ProfileArea")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("ProfileName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("ProfileResume")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("ProfileSource")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<string>("SourceDocument")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasColumnName("source_document");
-
-                    b.Property<string>("Terms")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("terms");
 
                     b.HasKey("Id");
 
@@ -90,7 +72,7 @@ namespace backend.Data.Migrations
                     b.ToTable("ontologies", (string)null);
                 });
 
-            modelBuilder.Entity("backend.Data.OntologyAuthorPortfolio", b =>
+            modelBuilder.Entity("backend.Data.OntologyAuthorImage", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -103,52 +85,21 @@ namespace backend.Data.Migrations
                         .HasColumnType("character varying(250)")
                         .HasColumnName("author_name");
 
+                    b.Property<string>("ImageUrl")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("image_url");
+
                     b.Property<Guid>("OntologyId")
                         .HasColumnType("uuid")
                         .HasColumnName("ontology_id");
-
-                    b.Property<string>("PortfolioUrl")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)")
-                        .HasColumnName("portfolio_url");
 
                     b.HasKey("Id");
 
                     b.HasIndex("OntologyId", "AuthorName")
                         .IsUnique();
 
-                    b.ToTable("ontology_author_portfolios", (string)null);
-                });
-
-            modelBuilder.Entity("backend.Data.OntologyBaseDocument", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("description");
-
-                    b.Property<string>("Link")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)")
-                        .HasColumnName("link");
-
-                    b.Property<Guid>("OntologyId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("ontology_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OntologyId", "Link")
-                        .IsUnique();
-
-                    b.ToTable("ontology_base_documents", (string)null);
+                    b.ToTable("ontology_author_images", (string)null);
                 });
 
             modelBuilder.Entity("backend.Data.User", b =>
@@ -192,21 +143,10 @@ namespace backend.Data.Migrations
                     b.ToTable("users", (string)null);
                 });
 
-            modelBuilder.Entity("backend.Data.OntologyAuthorPortfolio", b =>
+            modelBuilder.Entity("backend.Data.OntologyAuthorImage", b =>
                 {
                     b.HasOne("backend.Data.Ontology", "Ontology")
-                        .WithMany("AuthorPortfolios")
-                        .HasForeignKey("OntologyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Ontology");
-                });
-
-            modelBuilder.Entity("backend.Data.OntologyBaseDocument", b =>
-                {
-                    b.HasOne("backend.Data.Ontology", "Ontology")
-                        .WithMany("BaseDocuments")
+                        .WithMany("AuthorImages")
                         .HasForeignKey("OntologyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -216,9 +156,7 @@ namespace backend.Data.Migrations
 
             modelBuilder.Entity("backend.Data.Ontology", b =>
                 {
-                    b.Navigation("AuthorPortfolios");
-
-                    b.Navigation("BaseDocuments");
+                    b.Navigation("AuthorImages");
                 });
 #pragma warning restore 612, 618
         }

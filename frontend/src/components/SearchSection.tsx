@@ -3,7 +3,7 @@ import { uiText, type Language } from "../i18n";
 import { LoaderCircle, Search } from "lucide-react";
 import { SearchTabs } from "./SearchTabs";
 import { ApiError, executeSparql, search } from "../api";
-import { RdfGraph } from "./RdfGraph";
+import { extractTriples, RdfGraph } from "./RdfGraph";
 
 type SearchSectionProps = {
   searchView: "free" | "sparql";
@@ -49,6 +49,7 @@ export function SearchSection({ searchView, onSearchViewChange, darkMode, langua
     ? "mb-4 text-xl font-semibold text-[#F5F1E6]"
     : "mb-4 text-xl font-semibold text-[#2A1F16]";
   const canSubmit = (searchView === "free" ? freeSearchQuery : sparqlQuery).trim().length > 0;
+  const hasGraphData = resultData !== null && extractTriples(resultData).length > 0;
 
   const handleSearchSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -126,16 +127,16 @@ export function SearchSection({ searchView, onSearchViewChange, darkMode, langua
 
       {(searchResult || error || ollamaResponse) && (
       <section className="mt-5 grid grid-cols-1 items-start gap-5">
-        <div className={resultPanelClass}>
-          <h3 className={resultPanelTitleClass}>{translation.graphResult}</h3>
-          {error ? (
-            <p className="whitespace-pre-wrap text-sm text-red-700">{error}</p>
-          ) : searchResult ? (
-            <RdfGraph result={resultData} darkMode={darkMode} />
-          ) : (
-            <p className={secondaryTextClass}>{translation.lowerSectionText}</p>
-          )}
-        </div>
+        {(error || hasGraphData) && (
+          <div className={resultPanelClass}>
+            <h3 className={resultPanelTitleClass}>{translation.graphResult}</h3>
+            {error ? (
+              <p className="whitespace-pre-wrap text-sm text-red-700">{error}</p>
+            ) : (
+              <RdfGraph result={resultData} darkMode={darkMode} />
+            )}
+          </div>
+        )}
 
         {searchView === "free" && ollamaResponse && (
           <div className={resultPanelClass}>

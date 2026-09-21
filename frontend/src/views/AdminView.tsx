@@ -2,13 +2,14 @@ import { useState } from "react";
 import { uiText, type Language } from "../i18n";
 import { AdminInsertSection } from "../components/AdminInsertSection";
 import { AdminStatisticsSection } from "../components/AdminStatisticsSection";
+import { AdminOntologySection } from "../components/AdminOntologySection";
 
 type AdminViewProps = {
   darkMode: boolean;
   language: Language;
 };
 
-type AdminSection = "insert" | "statistics";
+type AdminSection = "insert" | "statistics" | "ontologies";
 
 export function AdminView({ darkMode, language }: AdminViewProps) {
   const [activeSection, setActiveSection] = useState<AdminSection>("statistics");
@@ -43,6 +44,9 @@ export function AdminView({ darkMode, language }: AdminViewProps) {
               >
                 {translation.statsInsert}
               </button>
+              <button type="button" onClick={() => setActiveSection("ontologies")} className={activeSection === "ontologies" ? activeButtonClass : baseButtonClass}>
+                Documentações
+              </button>
 
               <button
                 type="button"
@@ -55,7 +59,7 @@ export function AdminView({ darkMode, language }: AdminViewProps) {
           </div>
         </nav>
 
-        {activeSection === "insert" ? <AdminInsertSection darkMode={darkMode} language={language} /> : <AdminStatisticsSection darkMode={darkMode} />}
+        {activeSection === "insert" ? <AdminInsertSection darkMode={darkMode} language={language} /> : activeSection === "ontologies" ? <AdminOntologySection darkMode={darkMode} /> : <AdminStatisticsSection darkMode={darkMode} />}
       </div>
     </div>
   );
